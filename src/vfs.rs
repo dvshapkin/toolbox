@@ -1,7 +1,13 @@
 //! Virtual file system allows you to work with relative file paths in a convenient way
 
+mod errors;
+
 use std::path::{Path, PathBuf};
-use std::io;
+use std::io::{Result, Error, ErrorKind};
+use std::fs;
+
+use errors::NotAbsolutePathError;
+
 
 /// Create new `VirtualFileSystem`
 ///
@@ -25,7 +31,7 @@ impl VirtualFileSystem {
     /// Change current `root`.
     ///
     /// A `new_root` path must exists; it may be absolute or relative.
-    pub fn chroot(&mut self, new_root: &str) -> io::Result<()> {
+    pub fn chroot(&mut self, new_root: &str) -> Result<()> {
         match Path::new(new_root).canonicalize() {
             Ok(new_root) => {
                 if new_root != self.root {
@@ -51,20 +57,31 @@ impl VirtualFileSystem {
 
     /// Convert absolute `path` to relative
     ///
-    /// If `path` is not absolute, then return `None`.
+    /// If `path` is not absolute, then return `io::Error`.
     /// If `path` is equal to `root`, then return `.` (current).
     /// If `root = "/foo/bar"` and `path = "/foo/bar/more"`, then return `more`.
-    pub fn relative(&self, path: &Path) -> Option<PathBuf> {
+    pub fn relative(&self, path: &Path) -> Result<PathBuf> {
         if path.is_absolute() {
             if path == self.root {
-                return Some(PathBuf::from("."));
+                return Ok(PathBuf::from("."));
             } else {
                 if path.starts_with(&self.root) {
-                    return Some(path.strip_prefix(&self.root).unwrap().to_path_buf());
+                    return Ok(path.strip_prefix(&self.root).unwrap().to_path_buf());
                 }
             }
         }
-        None
+        Err(Error::new(ErrorKind::Other, NotAbsolutePathError::from("")))
+    }
+
+    /// Creates a new, empty directory at the provided path
+    ///
+    pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let path = path.as_ref();
+        if path.is_absolute() {
+            fs::create_dir(self.root.join(self.relative(path)?))
+        } else {
+            fs::create_dir(self.root.join(path))
+        }
     }
 }
 
@@ -108,9 +125,30 @@ mod tests {
     #[test]
     fn relative_ok() {
         let vfs = super::new(".").unwrap();
-        assert_eq!(vfs.root, Path::new("/home/dvshapkin/projects/rust/vfs").canonicalize().unwrap());
+        assert_eq!(vfs.root, Path::new("/home/dvshapkin/projects/rust/toolbox").canonicalize().unwrap());
 
-        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/vfs")).unwrap(), Path::new("."));
-        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/vfs/Cargo.toml")).unwrap(), Path::new("Cargo.toml"));
+        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/toolbox")).unwrap(), Path::new("."));
+        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/toolbox/Cargo.toml")).unwrap(), Path::new("Cargo.toml"));
+    }
+
+    #[test]
+    fn create_dir_ok() {
+        let vfs = super::new("tests").unwrap();
+        vfs.create_dir("new_dir").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected="too many dirs")]
+    fn create_dir_err() {
+        let vfs = super::new("tests").unwrap();
+        vfs.create_dir("new1/new2").expect("too many dirs");
+    }
+
+    #[test]
+    fn other() {
+        let vfs = super::new(".").unwrap();
+        for component in vfs.root.components() {
+            println!("{:?}", component);
+        }
     }
 }
