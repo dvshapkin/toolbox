@@ -14,8 +14,8 @@ use errors::NotAbsolutePathError;
 /// `root` - base directory for VFS.
 /// A `root` path must exists; if not, return value will be `None`.
 /// If it's a relative path, then it will be normalized.
-pub fn new(root: &str) -> Option<VirtualFileSystem> {
-    match Path::new(root).canonicalize() {
+pub fn new<P: AsRef<Path>>(root: P) -> Option<VirtualFileSystem> {
+    match Path::new(root.as_ref()).canonicalize() {
         Ok(path) => Some(VirtualFileSystem { root: path }),
         _ => None
     }
@@ -31,7 +31,8 @@ impl VirtualFileSystem {
     /// Change current `root`.
     ///
     /// A `new_root` path must exists; it may be absolute or relative.
-    pub fn chroot(&mut self, new_root: &str) -> Result<()> {
+    pub fn chroot<P: AsRef<Path>>(&mut self, new_root: P) -> Result<()> {
+        let new_root = new_root.as_ref();
         match Path::new(new_root).canonicalize() {
             Ok(new_root) => {
                 if new_root != self.root {
@@ -47,9 +48,9 @@ impl VirtualFileSystem {
     ///
     /// If `path` is absolute, then return it.
     /// If `path` is relative, then append it to the end of the current `root` and return.
-    pub fn absolute(&self, path: &Path) -> PathBuf {
-        if path.is_absolute() {
-            path.to_path_buf()
+    pub fn absolute<P: AsRef<Path>>(&self, path: P) -> PathBuf {
+        if path.as_ref().is_absolute() {
+            path.as_ref().to_path_buf()
         } else {
             self.root.join(path)
         }
@@ -60,7 +61,8 @@ impl VirtualFileSystem {
     /// If `path` is not absolute, then return `io::Error`.
     /// If `path` is equal to `root`, then return `.` (current).
     /// If `root = "/foo/bar"` and `path = "/foo/bar/more"`, then return `more`.
-    pub fn relative(&self, path: &Path) -> Result<PathBuf> {
+    pub fn relative<P: AsRef<Path>>(&self, path: P) -> Result<PathBuf> {
+        let path = path.as_ref();
         if path.is_absolute() {
             if path == self.root {
                 return Ok(PathBuf::from("."));
@@ -142,6 +144,12 @@ mod tests {
     fn create_dir_err() {
         let vfs = super::new("tests").unwrap();
         vfs.create_dir("new1/new2").expect("too many dirs");
+    }
+
+    #[test]
+    fn absolute_ok() {
+        let vfs = super::new("tests").unwrap();
+        assert_eq!(&vfs.absolute("test1"), Path::new("/home/dvshapkin/projects/rust/toolbox/tests/test1"));
     }
 
     #[test]
