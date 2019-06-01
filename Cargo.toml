@@ -1,7 +1,17 @@
 [package]
 name = "toolbox"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["dvshapkin <dvshapkin@mail.ru>"]
 edition = "2018"
+
+description = "Useful tools for daily use"
+
+documentation = "https://docs.rs/toolbox"
+homepage = "https://github.com/dvshapkin/toolbox"
+repository = "https://github.com/dvshapkin/toolbox"
+
+keywords = ["tools", "vfs"]
+
+license = "Apache-2.0"
 
 [dependencies]
