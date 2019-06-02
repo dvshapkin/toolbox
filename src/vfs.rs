@@ -30,37 +30,30 @@ impl VirtualFileSystem {
 
     /// Change current `root`.
     ///
-    /// A `new_root` path must exists; it may be absolute or relative.
+    /// A `new_root` path may be absolute or relative and it must exists.
     pub fn chroot<P: AsRef<Path>>(&mut self, new_root: P) -> Result<()> {
-        let new_root = new_root.as_ref();
-        match Path::new(new_root).canonicalize() {
-            Ok(new_root) => {
-                if new_root != self.root {
-                    self.root = self.absolute(&new_root);
-                }
-                Ok(())
-            },
-            Err(e) => Err(e)
-        }
+        self.root = self.absolute(new_root)?;
+        Ok(())
     }
 
     /// Convert relative `path` to absolute.
     ///
     /// If `path` is absolute, then return it.
-    /// If `path` is relative, then append it to the end of the current `root` and return.
-    pub fn absolute<P: AsRef<Path>>(&self, path: P) -> PathBuf {
-        if path.as_ref().is_absolute() {
+    /// If `path` is relative, then append it to the end of the current `root` and return joined path.
+    /// If joined path in last case is not exists, then `io::Error` will occure.
+    pub fn absolute<P: AsRef<Path>>(&self, path: P) -> Result<PathBuf> {
+        (if path.as_ref().is_absolute() {
             path.as_ref().to_path_buf()
         } else {
             self.root.join(path)
-        }
+        }).canonicalize()
     }
 
     /// Convert absolute `path` to relative
     ///
     /// If `path` is not absolute, then return `io::Error`.
     /// If `path` is equal to `root`, then return `.` (current).
-    /// If `root = "/foo/bar"` and `path = "/foo/bar/more"`, then return `more`.
+    /// If `root` equals to `/foo/bar` and `path` equals to `/foo/bar/more`, then return `more`.
     pub fn relative<P: AsRef<Path>>(&self, path: P) -> Result<PathBuf> {
         let path = path.as_ref();
         if path.is_absolute() {
@@ -72,14 +65,22 @@ impl VirtualFileSystem {
                 }
             }
         }
-        Err(Error::new(ErrorKind::Other, NotAbsolutePathError::from("")))
+        Err(Error::new(ErrorKind::Other, NotAbsolutePathError::from("Argument is not absolute path.")))
+    }
+
+    /// Checks the existence of a `path`
+    ///
+    pub fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
+        match self.absolute(path) {
+            Ok(_) => true,
+            Err(_) => false
+        }
     }
 
     /// Creates a new, empty directory at the provided path
     ///
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let path = path.as_ref();
-        if path.is_absolute() {
+        if path.as_ref().is_absolute() {
             fs::create_dir(self.root.join(self.relative(path)?))
         } else {
             fs::create_dir(self.root.join(path))
@@ -89,74 +90,88 @@ impl VirtualFileSystem {
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path};
+    use std::path::{Path, PathBuf};
+
+    const ROOT: &str = "tests/root";
+
+    fn new_vfs() -> super::VirtualFileSystem {
+        super::new(ROOT).unwrap()
+    }
+
+    fn cur_dir() -> PathBuf {
+        Path::new(ROOT).canonicalize().unwrap()
+    }
 
     #[test]
     fn root_ok() {
-        let vfs = super::new(".").unwrap();
-        assert_eq!(vfs.root, Path::new("F:\\projects\\rust\\vfs").canonicalize().unwrap());
+        let vfs = new_vfs();
+        assert_eq!(vfs.root, cur_dir());
     }
 
     #[test]
     fn chroot_ok() {
-        let mut vfs = super::new(".").unwrap();
+        let mut vfs = new_vfs();
 
         // new root == old root
-        vfs.chroot(".").expect("canonicalize error");
-        assert_eq!(vfs.root, Path::new("F:\\projects\\rust\\vfs").canonicalize().unwrap());
+        vfs.chroot(".").unwrap();
+        assert_eq!(vfs.root, cur_dir());
 
         // new root relative && exists
-        vfs.chroot("src").expect("canonicalize error");
-        assert_eq!(vfs.root, Path::new("F:\\projects\\rust\\vfs\\src").canonicalize().unwrap());
+        vfs.chroot("more").unwrap();
+        assert_eq!(vfs.root, cur_dir().join("more"));
 
         // new root absolute && exists
-        vfs.chroot("F:\\projects").expect("canonicalize error");
-        assert_eq!(vfs.root, Path::new("F:\\projects").canonicalize().unwrap());
+        vfs.chroot("../..").unwrap();
+        assert_eq!(vfs.root, cur_dir().parent().unwrap());
     }
 
     #[test]
     #[should_panic(expected="canonicalize error")]
     fn chroot_err() {
-        let mut vfs = super::new(".").unwrap();
+        let mut vfs = new_vfs();
 
         // new root not exists
-        vfs.chroot("F:\\projects\\foo").expect("canonicalize error");
-        assert_eq!(vfs.root, Path::new("F:\\projects\\foo").canonicalize().unwrap());
+        vfs.chroot("more/not_exists").expect("canonicalize error");
+    }
+
+    #[test]
+    fn absolute_ok() {
+        let vfs = new_vfs();
+        assert_eq!(vfs.absolute("more").unwrap(), cur_dir().join("more"));
     }
 
     #[test]
     fn relative_ok() {
-        let vfs = super::new(".").unwrap();
-        assert_eq!(vfs.root, Path::new("/home/dvshapkin/projects/rust/toolbox").canonicalize().unwrap());
+        let vfs = new_vfs();
 
-        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/toolbox")).unwrap(), Path::new("."));
-        assert_eq!(vfs.relative(Path::new("/home/dvshapkin/projects/rust/toolbox/Cargo.toml")).unwrap(), Path::new("Cargo.toml"));
+        assert_eq!(vfs.relative(cur_dir().join("more")).unwrap(), Path::new("more"));
+    }
+
+    #[test]
+    #[should_panic(expected="Argument is not absolute path.")]
+    fn relative_err() {
+        let vfs = new_vfs();
+
+        vfs.relative("more").expect("Argument is not absolute path.");
+    }
+
+    #[test]
+    fn exists_ok() {
+        let vfs = new_vfs();
+        assert!(vfs.exists("more/example.txt"));
+        assert!(! vfs.exists("foo"));
     }
 
     #[test]
     fn create_dir_ok() {
-        let vfs = super::new("tests").unwrap();
+        let vfs = new_vfs();
         vfs.create_dir("new_dir").unwrap();
     }
 
     #[test]
     #[should_panic(expected="too many dirs")]
     fn create_dir_err() {
-        let vfs = super::new("tests").unwrap();
+        let vfs = new_vfs();
         vfs.create_dir("new1/new2").expect("too many dirs");
-    }
-
-    #[test]
-    fn absolute_ok() {
-        let vfs = super::new("tests").unwrap();
-        assert_eq!(&vfs.absolute("test1"), Path::new("/home/dvshapkin/projects/rust/toolbox/tests/test1"));
-    }
-
-    #[test]
-    fn other() {
-        let vfs = super::new(".").unwrap();
-        for component in vfs.root.components() {
-            println!("{:?}", component);
-        }
     }
 }
