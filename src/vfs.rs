@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::io::{Result, Error, ErrorKind};
 use std::fs;
 
-use errors::NotAbsolutePathError;
+use errors::{NotAbsolutePathError, NotRelativePathError, PathNotBelongsError};
 
 
 /// Create new `VirtualFileSystem`.
@@ -21,10 +21,12 @@ pub fn new<P: AsRef<Path>>(root: P) -> Option<VirtualFileSystem> {
     }
 }
 
+
 /// A reference to an virtual file system.
 pub struct VirtualFileSystem {
     pub root: PathBuf
 }
+
 
 impl VirtualFileSystem {
 
@@ -32,21 +34,31 @@ impl VirtualFileSystem {
     ///
     /// A `new_root` path may be absolute or relative and it must exists.
     pub fn chroot<P: AsRef<Path>>(&mut self, new_root: P) -> Result<()> {
-        self.root = self.absolute(new_root)?;
+        if new_root.as_ref().is_absolute() {
+            self.root = new_root.as_ref().canonicalize()?;
+        } else {
+            self.root = self.absolute(new_root)?;
+        }
         Ok(())
     }
 
     /// Convert relative `path` to absolute.
     ///
-    /// If `path` is absolute, then return it.
+    /// If `path` is absolute and starts with current `root`, then return it.
     /// If `path` is relative, then append it to the end of the current `root` and return joined path.
     /// If joined path in last case is not exists, then `io::Error` will occure.
     pub fn absolute<P: AsRef<Path>>(&self, path: P) -> Result<PathBuf> {
-        (if path.as_ref().is_absolute() {
-            path.as_ref().to_path_buf()
+        let pb: PathBuf;
+        if path.as_ref().is_absolute() {
+            if self.contains(path.as_ref()) {
+                pb = path.as_ref().to_path_buf();
+            } else {
+                return Err(Error::new(ErrorKind::Other, NotRelativePathError::new()));
+            }
         } else {
-            self.root.join(path)
-        }).canonicalize()
+            pb = self.root.join(path.as_ref());
+        };
+        pb.canonicalize()
     }
 
     /// Convert absolute `path` to relative.
@@ -60,19 +72,23 @@ impl VirtualFileSystem {
             if path == self.root {
                 return Ok(PathBuf::from("."));
             } else {
-                if path.starts_with(&self.root) {
+                if self.contains(path) {
                     return Ok(path.strip_prefix(&self.root).unwrap().to_path_buf());
                 }
             }
         }
-        Err(Error::new(ErrorKind::Other, NotAbsolutePathError::from("Argument is not absolute path.")))
+        Err(Error::new(ErrorKind::Other, NotAbsolutePathError::new()))
     }
 
     /// Checks the existence of a `path`.
     ///
     pub fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
+        let path = path.as_ref();
+        if !self.contains(path) {
+            return false;
+        }
         match self.absolute(path) {
-            Ok(_) => true,
+            Ok(path) => path.exists(),
             Err(_) => false
         }
     }
@@ -80,20 +96,52 @@ impl VirtualFileSystem {
     /// Creates a new, empty directory at the provided path.
     ///
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if !self.contains(path.as_ref()) {
+            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+        }
         if path.as_ref().is_absolute() {
             fs::create_dir(self.root.join(self.relative(path)?))
         } else {
-            fs::create_dir(self.root.join(path))
+            fs::create_dir(self.root.join(path.as_ref()))
         }
     }
 
     /// Recursively create a directory and all of its parent components if they are missing.
     ///
     pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if !self.contains(path.as_ref()) {
+            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+        }
         if path.as_ref().is_absolute() {
             fs::create_dir_all(self.root.join(self.relative(path)?))
         } else {
-            fs::create_dir_all(self.root.join(path))
+            fs::create_dir_all(self.root.join(path.as_ref()))
+        }
+    }
+
+    /// Removes a directory at this path, after removing all its contents. Use carefully!
+    ///
+    pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if !self.contains(path.as_ref()) {
+            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+        }
+        if self.exists(path.as_ref()) {
+            if path.as_ref().is_absolute() {
+                fs::remove_dir_all(path)?;
+            } else {
+                fs::remove_dir_all(self.root.join(path.as_ref()))?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Verifies, that the `path` belongs to the virtual file system.
+    ///
+    fn contains<P: AsRef<Path>>(&self, path: P) -> bool {
+        if path.as_ref().is_absolute() {
+            path.as_ref().starts_with(&self.root)
+        } else {
+            true
         }
     }
 }
@@ -190,4 +238,10 @@ mod tests {
         let vfs = new_vfs();
         vfs.create_dir_all("new1/new2").unwrap();
     }
+
+//    #[test]
+//    fn remove_dir_all_ok() {
+//        let vfs = new_vfs();
+//        vfs.remove_dir_all("new_dir").unwrap();
+//    }
 }
