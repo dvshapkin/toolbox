@@ -1,4 +1,4 @@
-//! Virtual file system allows you to work with relative file paths in a convenient way
+//! Virtual file system allows you to work with relative file paths in a convenient way.
 
 mod errors;
 
@@ -9,7 +9,7 @@ use std::fs;
 use errors::NotAbsolutePathError;
 
 
-/// Create new `VirtualFileSystem`
+/// Create new `VirtualFileSystem`.
 ///
 /// `root` - base directory for VFS.
 /// A `root` path must exists; if not, return value will be `None`.
@@ -21,7 +21,7 @@ pub fn new<P: AsRef<Path>>(root: P) -> Option<VirtualFileSystem> {
     }
 }
 
-/// A reference to an virtual file system
+/// A reference to an virtual file system.
 pub struct VirtualFileSystem {
     pub root: PathBuf
 }
@@ -49,7 +49,7 @@ impl VirtualFileSystem {
         }).canonicalize()
     }
 
-    /// Convert absolute `path` to relative
+    /// Convert absolute `path` to relative.
     ///
     /// If `path` is not absolute, then return `io::Error`.
     /// If `path` is equal to `root`, then return `.` (current).
@@ -68,7 +68,7 @@ impl VirtualFileSystem {
         Err(Error::new(ErrorKind::Other, NotAbsolutePathError::from("Argument is not absolute path.")))
     }
 
-    /// Checks the existence of a `path`
+    /// Checks the existence of a `path`.
     ///
     pub fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
         match self.absolute(path) {
@@ -77,13 +77,23 @@ impl VirtualFileSystem {
         }
     }
 
-    /// Creates a new, empty directory at the provided path
+    /// Creates a new, empty directory at the provided path.
     ///
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if path.as_ref().is_absolute() {
             fs::create_dir(self.root.join(self.relative(path)?))
         } else {
             fs::create_dir(self.root.join(path))
+        }
+    }
+
+    /// Recursively create a directory and all of its parent components if they are missing.
+    ///
+    pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if path.as_ref().is_absolute() {
+            fs::create_dir_all(self.root.join(self.relative(path)?))
+        } else {
+            fs::create_dir_all(self.root.join(path))
         }
     }
 }
@@ -173,5 +183,11 @@ mod tests {
     fn create_dir_err() {
         let vfs = new_vfs();
         vfs.create_dir("new1/new2").expect("too many dirs");
+    }
+
+    #[test]
+    fn create_dir_all_ok() {
+        let vfs = new_vfs();
+        vfs.create_dir_all("new1/new2").unwrap();
     }
 }
