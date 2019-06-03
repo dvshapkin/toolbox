@@ -174,13 +174,13 @@ mod tests {
         vfs.chroot(".").unwrap();
         assert_eq!(vfs.root, cur_dir());
 
-//        // new root relative && exists
-//        vfs.chroot("more").unwrap();
-//        assert_eq!(vfs.root, cur_dir().join("more"));
-//
-//        // new root absolute && exists
-//        vfs.chroot("../..").unwrap();
-//        assert_eq!(vfs.root, cur_dir().parent().unwrap());
+        // new root relative && exists
+        vfs.chroot("more").unwrap();
+        assert_eq!(vfs.root, cur_dir().join("more"));
+
+        // new root absolute && exists
+        vfs.chroot("../..").unwrap();
+        assert_eq!(vfs.root, cur_dir().parent().unwrap());
     }
 
     #[test]
