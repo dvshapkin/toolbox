@@ -1,10 +1,12 @@
 [package]
 name = "toolbox"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["dvshapkin <dvshapkin@mail.ru>"]
 edition = "2018"
 
 description = "Simple tools for daily use"
+
+readme = "README.md"
 
 documentation = "https://docs.rs/toolbox"
 homepage = "https://github.com/dvshapkin/toolbox"
