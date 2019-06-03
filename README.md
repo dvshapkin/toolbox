@@ -1,4 +1,4 @@
-# toolbox [vfs]
+# toolbox::{vfs}
 simple utils
 
 # vfs
