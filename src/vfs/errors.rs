@@ -1,15 +1,16 @@
-
-use std::fmt::{Display, Formatter, Error};
+use std::fmt::{Display, Error, Formatter};
 
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
 pub struct NotAbsolutePathError {
-    pub message: String
+    pub message: String,
 }
 
 impl NotAbsolutePathError {
     pub fn new() -> NotAbsolutePathError {
-        NotAbsolutePathError{ message: "Argument is not absolute path.".to_string() }
+        NotAbsolutePathError {
+            message: "Argument is not absolute path.".to_string(),
+        }
     }
 }
 
@@ -25,16 +26,17 @@ impl std::error::Error for NotAbsolutePathError {
     }
 }
 
-
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
 pub struct NotRelativePathError {
-    pub message: String
+    pub message: String,
 }
 
 impl NotRelativePathError {
     pub fn new() -> NotRelativePathError {
-        NotRelativePathError{ message: "Argument is not relative path.".to_string() }
+        NotRelativePathError {
+            message: "Argument is not relative path.".to_string(),
+        }
     }
 }
 
@@ -50,16 +52,17 @@ impl std::error::Error for NotRelativePathError {
     }
 }
 
-
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
 pub struct PathNotBelongsError {
-    pub message: String
+    pub message: String,
 }
 
 impl PathNotBelongsError {
     pub fn new(path: &str) -> PathNotBelongsError {
-        PathNotBelongsError{ message: format!("File system don't contain this path: {}", path) }
+        PathNotBelongsError {
+            message: format!("File system don't contain this path: {}", path),
+        }
     }
 }
 

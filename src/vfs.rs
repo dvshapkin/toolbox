@@ -2,12 +2,11 @@
 
 mod errors;
 
-use std::path::{Path, PathBuf};
-use std::io::{Result, Error, ErrorKind};
 use std::fs;
+use std::io::{Error, ErrorKind, Result};
+use std::path::{Path, PathBuf};
 
 use errors::{NotAbsolutePathError, NotRelativePathError, PathNotBelongsError};
-
 
 /// Create new `VirtualFileSystem`.
 ///
@@ -17,19 +16,16 @@ use errors::{NotAbsolutePathError, NotRelativePathError, PathNotBelongsError};
 pub fn new<P: AsRef<Path>>(root: P) -> Option<VirtualFileSystem> {
     match Path::new(root.as_ref()).canonicalize() {
         Ok(path) => Some(VirtualFileSystem { root: path }),
-        _ => None
+        _ => None,
     }
 }
 
-
 /// A reference to an virtual file system.
 pub struct VirtualFileSystem {
-    pub root: PathBuf
+    pub root: PathBuf,
 }
 
-
 impl VirtualFileSystem {
-
     /// Change current `root`.
     ///
     /// A `new_root` path may be absolute or relative and it must exists.
@@ -48,15 +44,14 @@ impl VirtualFileSystem {
     /// If `path` is relative, then append it to the end of the current `root` and return joined path.
     /// If joined path in last case is not exists, then `io::Error` will occure.
     pub fn absolute<P: AsRef<Path>>(&self, path: P) -> Result<PathBuf> {
-        let pb: PathBuf;
-        if path.as_ref().is_absolute() {
+        let pb = if path.as_ref().is_absolute() {
             if self.contains(path.as_ref()) {
-                pb = path.as_ref().to_path_buf();
+                path.as_ref().to_path_buf()
             } else {
                 return Err(Error::new(ErrorKind::Other, NotRelativePathError::new()));
             }
         } else {
-            pb = self.root.join(path.as_ref());
+            self.root.join(path.as_ref())
         };
         pb.canonicalize()
     }
@@ -89,7 +84,7 @@ impl VirtualFileSystem {
         }
         match self.absolute(path) {
             Ok(path) => path.exists(),
-            Err(_) => false
+            Err(_) => false,
         }
     }
 
@@ -97,7 +92,10 @@ impl VirtualFileSystem {
     ///
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if !self.contains(path.as_ref()) {
-            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+            return Err(Error::new(
+                ErrorKind::Other,
+                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+            ));
         }
         if path.as_ref().is_absolute() {
             fs::create_dir(self.root.join(self.relative(path)?))
@@ -110,7 +108,10 @@ impl VirtualFileSystem {
     ///
     pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if !self.contains(path.as_ref()) {
-            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+            return Err(Error::new(
+                ErrorKind::Other,
+                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+            ));
         }
         if path.as_ref().is_absolute() {
             fs::create_dir_all(self.root.join(self.relative(path)?))
@@ -123,7 +124,10 @@ impl VirtualFileSystem {
     ///
     pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         if !self.contains(path.as_ref()) {
-            return Err(Error::new(ErrorKind::Other, PathNotBelongsError::new(path.as_ref().to_str().unwrap())));
+            return Err(Error::new(
+                ErrorKind::Other,
+                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+            ));
         }
         if self.exists(path.as_ref()) {
             if path.as_ref().is_absolute() {
@@ -184,7 +188,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected="canonicalize error")]
+    #[should_panic(expected = "canonicalize error")]
     fn chroot_err() {
         let mut vfs = new_vfs();
 
@@ -202,22 +206,26 @@ mod tests {
     fn relative_ok() {
         let vfs = new_vfs();
 
-        assert_eq!(vfs.relative(cur_dir().join("more")).unwrap(), Path::new("more"));
+        assert_eq!(
+            vfs.relative(cur_dir().join("more")).unwrap(),
+            Path::new("more")
+        );
     }
 
     #[test]
-    #[should_panic(expected="Argument is not absolute path.")]
+    #[should_panic(expected = "Argument is not absolute path.")]
     fn relative_err() {
         let vfs = new_vfs();
 
-        vfs.relative("more").expect("Argument is not absolute path.");
+        vfs.relative("more")
+            .expect("Argument is not absolute path.");
     }
 
     #[test]
     fn exists_ok() {
         let vfs = new_vfs();
         assert!(vfs.exists("more/example.txt"));
-        assert!(! vfs.exists("foo"));
+        assert!(!vfs.exists("foo"));
     }
 
     #[test]
@@ -227,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected="too many dirs")]
+    #[should_panic(expected = "too many dirs")]
     fn create_dir_err() {
         let vfs = new_vfs();
         vfs.create_dir("new1/new2").expect("too many dirs");
@@ -239,9 +247,9 @@ mod tests {
         vfs.create_dir_all("new1/new2").unwrap();
     }
 
-//    #[test]
-//    fn remove_dir_all_ok() {
-//        let vfs = new_vfs();
-//        vfs.remove_dir_all("new_dir").unwrap();
-//    }
+    //    #[test]
+    //    fn remove_dir_all_ok() {
+    //        let vfs = new_vfs();
+    //        vfs.remove_dir_all("new_dir").unwrap();
+    //    }
 }
