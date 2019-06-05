@@ -94,7 +94,7 @@ impl VirtualFileSystem {
         if !self.contains(path.as_ref()) {
             return Err(Error::new(
                 ErrorKind::Other,
-                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+                PathNotBelongsError::new(path.as_ref()),
             ));
         }
         if path.as_ref().is_absolute() {
@@ -110,7 +110,7 @@ impl VirtualFileSystem {
         if !self.contains(path.as_ref()) {
             return Err(Error::new(
                 ErrorKind::Other,
-                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+                PathNotBelongsError::new(path.as_ref()),
             ));
         }
         if path.as_ref().is_absolute() {
@@ -126,7 +126,7 @@ impl VirtualFileSystem {
         if !self.contains(path.as_ref()) {
             return Err(Error::new(
                 ErrorKind::Other,
-                PathNotBelongsError::new(path.as_ref().to_str().unwrap()),
+                PathNotBelongsError::new(path.as_ref()),
             ));
         }
         if self.exists(path.as_ref()) {

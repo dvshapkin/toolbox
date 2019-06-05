@@ -1,4 +1,5 @@
 use std::fmt::{Display, Error, Formatter};
+use std::path::Path;
 
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
@@ -20,11 +21,7 @@ impl Display for NotAbsolutePathError {
     }
 }
 
-impl std::error::Error for NotAbsolutePathError {
-    fn description(&self) -> &str {
-        &self.message
-    }
-}
+impl std::error::Error for NotAbsolutePathError {}
 
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
@@ -46,11 +43,7 @@ impl Display for NotRelativePathError {
     }
 }
 
-impl std::error::Error for NotRelativePathError {
-    fn description(&self) -> &str {
-        &self.message
-    }
-}
+impl std::error::Error for NotRelativePathError {}
 
 //////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone)]
@@ -59,9 +52,9 @@ pub struct PathNotBelongsError {
 }
 
 impl PathNotBelongsError {
-    pub fn new(path: &str) -> PathNotBelongsError {
+    pub fn new(path: &Path) -> PathNotBelongsError {
         PathNotBelongsError {
-            message: format!("File system don't contain this path: {}", path),
+            message: format!("File system don't contain this path: {}", &path.display()),
         }
     }
 }
@@ -72,8 +65,4 @@ impl Display for PathNotBelongsError {
     }
 }
 
-impl std::error::Error for PathNotBelongsError {
-    fn description(&self) -> &str {
-        &self.message
-    }
-}
+impl std::error::Error for PathNotBelongsError {}
