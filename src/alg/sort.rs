@@ -1,5 +1,6 @@
 pub fn quick<T>(_seq: &mut [T])
-    where T: PartialOrd
+where
+    T: PartialOrd,
 {
     unimplemented!()
 }
