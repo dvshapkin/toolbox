@@ -1,29 +1,27 @@
 /// Binary search in slice.
 ///
 pub fn binary<T>(list: &[T], item: T) -> Option<usize>
-    where
-        T: PartialOrd
+where
+    T: PartialOrd,
 {
-    return partial(&list, 0, list.len(), item);
+    if list.is_empty() {
+        return None;
+    }
 
-    fn partial<T>(list: &[T], lhs: usize, rhs: usize, item: T) -> Option<usize>
-        where
-            T: PartialOrd
-    {
-        if list[lhs..rhs].len() == 0 {
-            return None;
-        }
+    let mut lhs = 0;
+    let mut rhs = list.len() - 1;
 
+    while lhs <= rhs {
         let mid = (lhs + rhs) / 2;
-
         if list[mid] > item {
-            return partial(&list, lhs, mid, item);
+            rhs = mid - 1;
         } else if list[mid] < item {
-            return partial(&list, mid, rhs, item);
+            lhs = mid + 1;
         } else {
             return Some(mid);
         }
     }
+    None
 }
 
 #[cfg(test)]
@@ -36,7 +34,7 @@ mod tests {
         let list = [5];
         assert_eq!(super::binary(&list, 5).unwrap(), 0);
 
-        let list = [5,5,5];
+        let list = [5, 5, 5];
         assert_eq!(super::binary(&list, 5).unwrap(), 1);
 
         let list = [];
