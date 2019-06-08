@@ -22,7 +22,6 @@ impl VirtualFileSystem {
     pub fn try_new<P: AsRef<Path>>(root: P) -> Result<Self> {
         Path::new(root.as_ref())
             .canonicalize()
-            // normalize ?
             .map(|path| Self { root: path })
     }
 
@@ -145,18 +144,17 @@ impl VirtualFileSystem {
     //        }
     //    }
 
-    fn normalize<P: AsRef<Path>>(&self, path: P) -> PathBuf {
-        let mut normalized = PathBuf::new();
-
+    pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
         match path.as_ref().components().count() {
-            0 => normalized.push("."),
+            0 => PathBuf::from("."),
 
-            1 => normalized.push(path),
+            1 => PathBuf::from(path.as_ref()),
 
             _ => {
+                let mut normalized = PathBuf::new();
                 for component in path.as_ref().components() {
                     match component {
-                        Component::CurDir => {},
+                        Component::CurDir => {}
                         Component::ParentDir => {
                             if normalized.components().count() == 0 {
                                 normalized.push(component);
@@ -167,28 +165,47 @@ impl VirtualFileSystem {
                                     normalized.pop();
                                 }
                             }
-                        },
-                        _ => normalized.push(component)
+                        }
+                        _ => normalized.push(component),
                     }
                 }
+                normalized
             }
-        };
-        normalized
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::{Path, PathBuf};
+    use super::VirtualFileSystem;
 
     const ROOT: &str = "tests/root";
 
-    fn new_vfs() -> super::VirtualFileSystem {
-        super::VirtualFileSystem::try_new(ROOT).unwrap()
+    fn new_vfs() -> VirtualFileSystem {
+        VirtualFileSystem::try_new(ROOT).unwrap()
     }
 
     fn cur_dir() -> PathBuf {
         Path::new(ROOT).canonicalize().unwrap()
+    }
+
+    #[test]
+    fn normalize_ok() {
+        assert_eq!(VirtualFileSystem::normalize(""), PathBuf::from("."));
+        assert_eq!(VirtualFileSystem::normalize("."), PathBuf::from("."));
+        assert_eq!(VirtualFileSystem::normalize(".."), PathBuf::from(".."));
+        assert_eq!(VirtualFileSystem::normalize("../."), PathBuf::from(".."));
+        assert_eq!(VirtualFileSystem::normalize("../.."), PathBuf::from("../.."));
+        assert_eq!(VirtualFileSystem::normalize("../../.."), PathBuf::from("../../.."));
+        assert_eq!(VirtualFileSystem::normalize(".././.."), PathBuf::from("../.."));
+        assert_eq!(VirtualFileSystem::normalize("./dir"), PathBuf::from("dir"));
+        assert_eq!(VirtualFileSystem::normalize("../dir"), PathBuf::from("../dir"));
+        assert_eq!(VirtualFileSystem::normalize("../dir/.."), PathBuf::from(".."));
+        assert_eq!(VirtualFileSystem::normalize("./first/second/.."), PathBuf::from("first"));
+        assert_eq!(VirtualFileSystem::normalize("first/./second"), PathBuf::from("first/second"));
+        assert_eq!(VirtualFileSystem::normalize("\\\\?\\C:\\"), PathBuf::from("\\\\?\\C:\\"));
+        assert_eq!(VirtualFileSystem::normalize("\\\\?\\C:/."), PathBuf::from("\\\\?\\C:/"));
     }
 
     #[test]
