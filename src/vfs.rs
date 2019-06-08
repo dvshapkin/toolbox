@@ -8,24 +8,25 @@ use std::path::{Path, PathBuf};
 
 use errors::{NotAbsolutePathError, NotRelativePathError, PathNotBelongsError};
 
-/// Create new `VirtualFileSystem`.
-///
-/// `root` - base directory for VFS.
-/// A `root` path must exists; if not, return value will be `None`.
-/// If it's a relative path, then it will be normalized.
-pub fn new<P: AsRef<Path>>(root: P) -> Option<VirtualFileSystem> {
-    match Path::new(root.as_ref()).canonicalize() {
-        Ok(path) => Some(VirtualFileSystem { root: path }),
-        _ => None,
-    }
-}
-
 /// A reference to an virtual file system.
 pub struct VirtualFileSystem {
     pub root: PathBuf,
 }
 
 impl VirtualFileSystem {
+
+    /// Create new `VirtualFileSystem`.
+    ///
+    /// `root` - base directory for VFS.
+    /// A `root` path must exists; if not, return value will be `None`.
+    /// If it's a relative path, then it will be normalized.
+    pub fn try_new<P: AsRef<Path>>(root: P) -> Option<Self> {
+        Path::new(root.as_ref())
+            .canonicalize()
+            .map(|path| Self { root: path })
+            .ok()
+    }
+
     /// Change current `root`.
     ///
     /// A `new_root` path may be absolute or relative and it must exists.
@@ -157,7 +158,7 @@ mod tests {
     const ROOT: &str = "tests/root";
 
     fn new_vfs() -> super::VirtualFileSystem {
-        super::new(ROOT).unwrap()
+        super::VirtualFileSystem::try_new(ROOT).unwrap()
     }
 
     fn cur_dir() -> PathBuf {
