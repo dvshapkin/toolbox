@@ -99,6 +99,18 @@ impl VirtualFileSystem {
 
     /// Removes a directory at this path, after removing all its contents. Use carefully!
     ///
+    pub fn remove_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        match self.absolute(path) {
+            Some(path) => {
+                fs::remove_dir(path)?;
+                Ok(())
+            },
+            None => Err(Error::from(ErrorKind::NotFound))
+        }
+    }
+
+    /// Removes a directory at this path, after removing all its contents. Use carefully!
+    ///
     pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         match self.absolute(path) {
             Some(path) => {
@@ -226,17 +238,35 @@ mod tests {
     fn create_dir_ok() {
         let vfs = new_vfs();
         vfs.create_dir("new_dir").unwrap();
+        assert!(vfs.exists("new_dir"));
+        vfs.remove_dir("new_dir").unwrap();
+    }
+
+    #[test]
+    fn remove_dir_ok() {
+        let vfs = new_vfs();
+        vfs.create_dir("new_dir").unwrap();
+        assert!(vfs.exists("new_dir"));
+        vfs.remove_dir("new_dir").unwrap();
+        assert!(!vfs.exists("new_dir"));
     }
 
     #[test]
     fn create_dir_all_ok() {
         let vfs = new_vfs();
         vfs.create_dir_all("new1/new2").unwrap();
+        assert!(vfs.exists("new1/new2"));
+        vfs.remove_dir_all("new1/new2").unwrap();
     }
 
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
-        vfs.remove_dir_all("new_dir").unwrap();
+        vfs.create_dir_all("new1/new2").unwrap();
+        assert!(vfs.exists("new1/new2"));
+        vfs.remove_dir_all("new1/new2").unwrap();
+        vfs.remove_dir_all("new1").unwrap();
+        assert!(!vfs.exists("new1/new2"));
+        assert!(!vfs.exists("new1"));
     }
 }
