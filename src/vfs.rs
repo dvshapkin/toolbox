@@ -138,7 +138,7 @@ impl VirtualFileSystem {
                             } else {
                                 if normalized.components().last().unwrap() == Component::ParentDir {
                                     normalized.push(component);
-                                } else {
+                                } else if normalized.components().last().unwrap() != Component::RootDir {
                                     normalized.pop();
                                 }
                             }
@@ -182,8 +182,11 @@ mod tests {
         assert_eq!(VirtualFileSystem::normalize("../dir/.."), PathBuf::from(".."));
         assert_eq!(VirtualFileSystem::normalize("./first/second/.."), PathBuf::from("first"));
         assert_eq!(VirtualFileSystem::normalize("first/./second"), PathBuf::from("first/second"));
-        assert_eq!(VirtualFileSystem::normalize("\\\\?\\C:\\"), PathBuf::from("\\\\?\\C:\\"));
-        assert_eq!(VirtualFileSystem::normalize("\\\\?\\C:/."), PathBuf::from("\\\\?\\C:/"));
+        #[cfg(windows)] {
+            assert_eq!(VirtualFileSystem::normalize(r"\\?\C:\"), PathBuf::from(r"\\?\C:\"));
+            assert_eq!(VirtualFileSystem::normalize(r"\\?\C:\."), PathBuf::from(r"\\?\C:\"));
+            assert_eq!(VirtualFileSystem::normalize(cur_dir().join(r"more\..")), PathBuf::from(cur_dir()));
+        }
     }
 
     #[test]
@@ -198,7 +201,10 @@ mod tests {
         assert_eq!(vfs.absolute(".").unwrap(), cur_dir());
         assert_eq!(vfs.absolute("more").unwrap(), cur_dir().join("more"));
         assert_eq!(vfs.absolute(cur_dir().join("more")).unwrap(), cur_dir().join("more"));
+        #[cfg(linux)]
         assert_eq!(vfs.absolute(PathBuf::from("/other/absolute")), None);
+        #[cfg(windows)]
+        assert_eq!(vfs.absolute(PathBuf::from(r"F:\other\absolute")), None);
     }
 
     #[test]
@@ -207,13 +213,20 @@ mod tests {
         assert_eq!(vfs.relative("./relative").unwrap(), PathBuf::from("relative"));
         assert_eq!(vfs.relative(cur_dir()).unwrap(), PathBuf::from("."));
         assert_eq!(vfs.relative(cur_dir().join("more")).unwrap(), PathBuf::from("more"));
+        #[cfg(linux)]
         assert_eq!(vfs.relative(PathBuf::from("/other/absolute")), None);
+        #[cfg(windows)]
+        assert_eq!(vfs.relative(PathBuf::from(r"F:\other\absolute")), None);
     }
 
     #[test]
     fn exists_ok() {
         let vfs = new_vfs();
+        #[cfg(linux)]
         assert!(vfs.exists("more/example.txt"));
+        #[cfg(windows)]
+        assert!(vfs.exists(r"more\example.txt"));
+
         assert!(!vfs.exists("foo"));
     }
 
@@ -230,7 +243,11 @@ mod tests {
         assert_eq!(vfs.root, cur_dir().join("more"));
 
         // new root absolute
+        #[cfg(linux)]
         assert!(vfs.chroot("../.."));
+        #[cfg(windows)]
+        assert!(vfs.chroot(r"..\.."));
+
         assert_eq!(vfs.root, cur_dir().parent().unwrap());
     }
 
@@ -254,19 +271,36 @@ mod tests {
     #[test]
     fn create_dir_all_ok() {
         let vfs = new_vfs();
-        vfs.create_dir_all("new1/new2").unwrap();
-        assert!(vfs.exists("new1/new2"));
-        vfs.remove_dir_all("new1/new2").unwrap();
+        #[cfg(linux)] {
+            vfs.create_dir_all("new1/new2").unwrap();
+            assert!(vfs.exists("new1/new2"));
+            vfs.remove_dir_all("new1/new2").unwrap();
+        }
+        #[cfg(windows)] {
+            vfs.create_dir_all(r"new1\new2").unwrap();
+            assert!(vfs.exists(r"new1\new2"));
+            vfs.remove_dir_all(r"new1\new2").unwrap();
+        }
     }
 
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
-        vfs.create_dir_all("new1/new2").unwrap();
-        assert!(vfs.exists("new1/new2"));
-        vfs.remove_dir_all("new1/new2").unwrap();
-        vfs.remove_dir_all("new1").unwrap();
-        assert!(!vfs.exists("new1/new2"));
-        assert!(!vfs.exists("new1"));
+        #[cfg(linux)] {
+            vfs.create_dir_all("new1/new2").unwrap();
+            assert!(vfs.exists("new1/new2"));
+            vfs.remove_dir_all("new1/new2").unwrap();
+            vfs.remove_dir_all("new1").unwrap();
+            assert!(!vfs.exists("new1/new2"));
+            assert!(!vfs.exists("new1"));
+        }
+        #[cfg(windows)] {
+            vfs.create_dir_all(r"new1\new2").unwrap();
+            assert!(vfs.exists(r"new1\new2"));
+            vfs.remove_dir_all(r"new1\new2").unwrap();
+            vfs.remove_dir_all("new1").unwrap();
+            assert!(!vfs.exists(r"new1\new2"));
+            assert!(!vfs.exists("new1"));
+        }
     }
 }
