@@ -201,7 +201,7 @@ mod tests {
         assert_eq!(vfs.absolute(".").unwrap(), cur_dir());
         assert_eq!(vfs.absolute("more").unwrap(), cur_dir().join("more"));
         assert_eq!(vfs.absolute(cur_dir().join("more")).unwrap(), cur_dir().join("more"));
-        #[cfg(linux)]
+        #[cfg(unix)]
         assert_eq!(vfs.absolute(PathBuf::from("/other/absolute")), None);
         #[cfg(windows)]
         assert_eq!(vfs.absolute(PathBuf::from(r"F:\other\absolute")), None);
@@ -213,7 +213,7 @@ mod tests {
         assert_eq!(vfs.relative("./relative").unwrap(), PathBuf::from("relative"));
         assert_eq!(vfs.relative(cur_dir()).unwrap(), PathBuf::from("."));
         assert_eq!(vfs.relative(cur_dir().join("more")).unwrap(), PathBuf::from("more"));
-        #[cfg(linux)]
+        #[cfg(unix)]
         assert_eq!(vfs.relative(PathBuf::from("/other/absolute")), None);
         #[cfg(windows)]
         assert_eq!(vfs.relative(PathBuf::from(r"F:\other\absolute")), None);
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn exists_ok() {
         let vfs = new_vfs();
-        #[cfg(linux)]
+        #[cfg(unix)]
         assert!(vfs.exists("more/example.txt"));
         #[cfg(windows)]
         assert!(vfs.exists(r"more\example.txt"));
@@ -243,7 +243,7 @@ mod tests {
         assert_eq!(vfs.root, cur_dir().join("more"));
 
         // new root absolute
-        #[cfg(linux)]
+        #[cfg(unix)]
         assert!(vfs.chroot("../.."));
         #[cfg(windows)]
         assert!(vfs.chroot(r"..\.."));
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn create_dir_all_ok() {
         let vfs = new_vfs();
-        #[cfg(linux)] {
+        #[cfg(unix)] {
             vfs.create_dir_all("new1/new2").unwrap();
             assert!(vfs.exists("new1/new2"));
             vfs.remove_dir_all("new1/new2").unwrap();
@@ -286,7 +286,7 @@ mod tests {
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
-        #[cfg(linux)] {
+        #[cfg(unix)] {
             vfs.create_dir_all("new1/new2").unwrap();
             assert!(vfs.exists("new1/new2"));
             vfs.remove_dir_all("new1/new2").unwrap();
