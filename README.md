@@ -10,4 +10,25 @@ Tested on linux, windows.
 
 ### alg
 *Search algorithms:*
-* binary
+<table>
+<tr>
+<th>
+name
+</th>
+<th>
+complexity
+</th>
+</tr>
+<tr>
+<td>maximum</td> <td>O(n)</td>
+</tr>
+<tr>
+<td>minimum</td> <td>O(n)</td>
+</tr>
+<tr>
+<td>binary</td> <td>O(log n)</td>
+</tr>
+</table>
+
+*Sort algorithms:*
+* selection
