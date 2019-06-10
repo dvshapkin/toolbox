@@ -12,7 +12,7 @@ documentation = "https://docs.rs/toolbox"
 homepage = "https://github.com/dvshapkin/toolbox"
 repository = "https://github.com/dvshapkin/toolbox"
 
-keywords = ["tools", "vfs"]
+keywords = ["tools", "vfs", "alg", "virtual file system", "algorithm"]
 
 license = "Apache-2.0"
 

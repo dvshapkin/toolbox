@@ -4,9 +4,10 @@
 
 Simple tools.
 
-# vfs
+### vfs
 Virtual file system for convenient work with relative paths. \
-Currently tested only on Linux.
+Tested on linux, windows.
 
-# alg
-Common algorithms.
+### alg
+*Search algorithms:*
+* binary
