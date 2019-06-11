@@ -11,24 +11,14 @@ Tested on linux, windows.
 ### alg
 *Search algorithms:*
 <table>
-<tr>
-<th>
-name
-</th>
-<th>
-complexity
-</th>
-</tr>
-<tr>
-<td>maximum</td> <td>O(n)</td>
-</tr>
-<tr>
-<td>minimum</td> <td>O(n)</td>
-</tr>
-<tr>
-<td>binary</td> <td>O(log n)</td>
-</tr>
+<tr><th>name</th><th>complexity</th></tr>
+<tr><td>max</td> <td>O(n)</td></tr>
+<tr><td>min</td> <td>O(n)</td></tr>
+<tr><td>binary</td> <td>O(log<sub><small>2</small></sub>n)</td></tr>
 </table>
 
 *Sort algorithms:*
-* selection
+<table>
+<tr><th>name</th><th>complexity</th></tr>
+<tr><td>selection</td> <td>O(n<sup><small>2</small></sup>)</td></tr>
+</table>

@@ -2,24 +2,44 @@ use super::search;
 
 /// Selection sort.
 ///
-pub fn selection<T>(list: &[T]) -> Option<Vec<T>>
-where T: PartialOrd + Clone
+pub fn selection<T>(list: &mut [T])
+    where T: PartialOrd
 {
-    let mut sorted = Vec::<T>::with_capacity(list.len());
-    let mut used = vec![false; list.len()];
-    let mut count = list.len();
-    while count > 0 {
-        let idx = search::min(&list)?;
-        sorted.push(list[idx].clone());
+    if list.len() < 2 {
+        return;
     }
-    Some(sorted)
+    let mut cur_pos = 0;
+    let max_idx = list.len() - 1;
+    while cur_pos < max_idx {
+        let idx = search::min(&list[cur_pos..]).unwrap() + cur_pos;
+        if idx > cur_pos {
+            list.swap(cur_pos, idx);
+        }
+        cur_pos += 1;
+
+    }
 }
 
 /// Quick sort.
 ///
-pub fn quick<T>(list: &mut [T])
+pub fn quick<T>(_list: &mut [T])
 where
     T: PartialOrd,
 {
     unimplemented!()
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn selection_ok() {
+        let mut list = [1, 2, 12, 5, 43, 21, 0, 34, 100, 3];
+        selection(&mut list);
+        for i in 0..list.len() - 1 {
+            assert!(list[i] <= list[i + 1]);
+        }
+    }
 }
