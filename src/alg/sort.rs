@@ -10,16 +10,22 @@ where
         return;
     }
 
-    let extrem = if ascending { search::min } else { search::max };
-
     let mut current = 0;
     let upper = list.len() - 1;
 
     while current < upper {
-        let found = extrem(&list[current..]).unwrap() + current;
+        let found = if ascending {
+            search::min(&list[current..])
+        } else {
+            search::max(&list[current..])
+        }
+        .unwrap()
+            + current;
+
         if compare(&list[found], &list[current], ascending) {
             list.swap(current, found);
         }
+
         current += 1;
     }
 }
