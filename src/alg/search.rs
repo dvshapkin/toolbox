@@ -2,7 +2,7 @@
 ///
 pub fn max<T>(list: &[T]) -> Option<usize>
 where
-    T: PartialOrd
+    T: PartialOrd,
 {
     if list.is_empty() {
         return None;
@@ -21,8 +21,8 @@ where
 /// Looking for the minimum element.
 ///
 pub fn min<T>(list: &[T]) -> Option<usize>
-    where
-        T: PartialOrd
+where
+    T: PartialOrd,
 {
     if list.is_empty() {
         return None;
@@ -124,10 +124,22 @@ mod tests {
 
         #[test]
         fn binary_string_ok() {
-            let list = ["a".to_string(), "a".to_string(), "b".to_string(), "e".to_string(), "f".to_string()];
+            let list = [
+                "a".to_string(),
+                "a".to_string(),
+                "b".to_string(),
+                "e".to_string(),
+                "f".to_string(),
+            ];
             assert_eq!(super::binary(&list, "e".to_string()).unwrap(), 3);
 
-            let list = ["aaa".to_string(), "aab".to_string(), "abb".to_string(), "abc".to_string(), "bcd".to_string()];
+            let list = [
+                "aaa".to_string(),
+                "aab".to_string(),
+                "abb".to_string(),
+                "abc".to_string(),
+                "bcd".to_string(),
+            ];
             assert_eq!(super::binary(&list, "aab".to_string()).unwrap(), 1);
         }
     }

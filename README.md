@@ -21,4 +21,5 @@ Tested on linux, windows.
 <table>
 <tr><th>name</th><th>complexity</th></tr>
 <tr><td>selection</td> <td>O(n<sup><small>2</small></sup>)</td></tr>
+<tr><td>quick</td> <td>O(n log<sub><small>2</small></sub>n)</td></tr>
 </table>

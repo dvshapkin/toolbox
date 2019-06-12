@@ -10,7 +10,6 @@ pub struct VirtualFileSystem {
 }
 
 impl VirtualFileSystem {
-
     /// Create new `VirtualFileSystem`.
     ///
     /// `root` - base directory for VFS.
@@ -68,8 +67,8 @@ impl VirtualFileSystem {
             Some(path) => {
                 self.root = path;
                 true
-            },
-            None => false
+            }
+            None => false,
         }
     }
 
@@ -80,8 +79,8 @@ impl VirtualFileSystem {
             Some(path) => {
                 fs::create_dir(path)?;
                 Ok(())
-            },
-            None => Err(Error::from(ErrorKind::NotFound))
+            }
+            None => Err(Error::from(ErrorKind::NotFound)),
         }
     }
 
@@ -92,8 +91,8 @@ impl VirtualFileSystem {
             Some(path) => {
                 fs::create_dir_all(path)?;
                 Ok(())
-            },
-            None => Err(Error::from(ErrorKind::NotFound))
+            }
+            None => Err(Error::from(ErrorKind::NotFound)),
         }
     }
 
@@ -104,8 +103,8 @@ impl VirtualFileSystem {
             Some(path) => {
                 fs::remove_dir(path)?;
                 Ok(())
-            },
-            None => Err(Error::from(ErrorKind::NotFound))
+            }
+            None => Err(Error::from(ErrorKind::NotFound)),
         }
     }
 
@@ -116,8 +115,8 @@ impl VirtualFileSystem {
             Some(path) => {
                 fs::remove_dir_all(path)?;
                 Ok(())
-            },
-            None => Err(Error::from(ErrorKind::NotFound))
+            }
+            None => Err(Error::from(ErrorKind::NotFound)),
         }
     }
 
@@ -138,7 +137,9 @@ impl VirtualFileSystem {
                             } else {
                                 if normalized.components().last().unwrap() == Component::ParentDir {
                                     normalized.push(component);
-                                } else if normalized.components().last().unwrap() != Component::RootDir {
+                                } else if normalized.components().last().unwrap()
+                                    != Component::RootDir
+                                {
                                     normalized.pop();
                                 }
                             }
@@ -174,18 +175,49 @@ mod tests {
         assert_eq!(VirtualFileSystem::normalize("."), PathBuf::from("."));
         assert_eq!(VirtualFileSystem::normalize(".."), PathBuf::from(".."));
         assert_eq!(VirtualFileSystem::normalize("../."), PathBuf::from(".."));
-        assert_eq!(VirtualFileSystem::normalize("../.."), PathBuf::from("../.."));
-        assert_eq!(VirtualFileSystem::normalize("../../.."), PathBuf::from("../../.."));
-        assert_eq!(VirtualFileSystem::normalize(".././.."), PathBuf::from("../.."));
+        assert_eq!(
+            VirtualFileSystem::normalize("../.."),
+            PathBuf::from("../..")
+        );
+        assert_eq!(
+            VirtualFileSystem::normalize("../../.."),
+            PathBuf::from("../../..")
+        );
+        assert_eq!(
+            VirtualFileSystem::normalize(".././.."),
+            PathBuf::from("../..")
+        );
         assert_eq!(VirtualFileSystem::normalize("./dir"), PathBuf::from("dir"));
-        assert_eq!(VirtualFileSystem::normalize("../dir"), PathBuf::from("../dir"));
-        assert_eq!(VirtualFileSystem::normalize("../dir/.."), PathBuf::from(".."));
-        assert_eq!(VirtualFileSystem::normalize("./first/second/.."), PathBuf::from("first"));
-        assert_eq!(VirtualFileSystem::normalize("first/./second"), PathBuf::from("first/second"));
-        #[cfg(windows)] {
-            assert_eq!(VirtualFileSystem::normalize(r"\\?\C:\"), PathBuf::from(r"\\?\C:\"));
-            assert_eq!(VirtualFileSystem::normalize(r"\\?\C:\."), PathBuf::from(r"\\?\C:\"));
-            assert_eq!(VirtualFileSystem::normalize(cur_dir().join(r"more\..")), PathBuf::from(cur_dir()));
+        assert_eq!(
+            VirtualFileSystem::normalize("../dir"),
+            PathBuf::from("../dir")
+        );
+        assert_eq!(
+            VirtualFileSystem::normalize("../dir/.."),
+            PathBuf::from("..")
+        );
+        assert_eq!(
+            VirtualFileSystem::normalize("./first/second/.."),
+            PathBuf::from("first")
+        );
+        assert_eq!(
+            VirtualFileSystem::normalize("first/./second"),
+            PathBuf::from("first/second")
+        );
+        #[cfg(windows)]
+        {
+            assert_eq!(
+                VirtualFileSystem::normalize(r"\\?\C:\"),
+                PathBuf::from(r"\\?\C:\")
+            );
+            assert_eq!(
+                VirtualFileSystem::normalize(r"\\?\C:\."),
+                PathBuf::from(r"\\?\C:\")
+            );
+            assert_eq!(
+                VirtualFileSystem::normalize(cur_dir().join(r"more\..")),
+                PathBuf::from(cur_dir())
+            );
         }
     }
 
@@ -200,7 +232,10 @@ mod tests {
         let vfs = new_vfs();
         assert_eq!(vfs.absolute(".").unwrap(), cur_dir());
         assert_eq!(vfs.absolute("more").unwrap(), cur_dir().join("more"));
-        assert_eq!(vfs.absolute(cur_dir().join("more")).unwrap(), cur_dir().join("more"));
+        assert_eq!(
+            vfs.absolute(cur_dir().join("more")).unwrap(),
+            cur_dir().join("more")
+        );
         #[cfg(unix)]
         assert_eq!(vfs.absolute(PathBuf::from("/other/absolute")), None);
         #[cfg(windows)]
@@ -210,9 +245,15 @@ mod tests {
     #[test]
     fn relative_ok() {
         let vfs = new_vfs();
-        assert_eq!(vfs.relative("./relative").unwrap(), PathBuf::from("relative"));
+        assert_eq!(
+            vfs.relative("./relative").unwrap(),
+            PathBuf::from("relative")
+        );
         assert_eq!(vfs.relative(cur_dir()).unwrap(), PathBuf::from("."));
-        assert_eq!(vfs.relative(cur_dir().join("more")).unwrap(), PathBuf::from("more"));
+        assert_eq!(
+            vfs.relative(cur_dir().join("more")).unwrap(),
+            PathBuf::from("more")
+        );
         #[cfg(unix)]
         assert_eq!(vfs.relative(PathBuf::from("/other/absolute")), None);
         #[cfg(windows)]
@@ -271,12 +312,14 @@ mod tests {
     #[test]
     fn create_dir_all_ok() {
         let vfs = new_vfs();
-        #[cfg(unix)] {
+        #[cfg(unix)]
+        {
             vfs.create_dir_all("new1/new2").unwrap();
             assert!(vfs.exists("new1/new2"));
             vfs.remove_dir_all("new1/new2").unwrap();
         }
-        #[cfg(windows)] {
+        #[cfg(windows)]
+        {
             vfs.create_dir_all(r"new1\new2").unwrap();
             assert!(vfs.exists(r"new1\new2"));
             vfs.remove_dir_all(r"new1\new2").unwrap();
@@ -286,7 +329,8 @@ mod tests {
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
-        #[cfg(unix)] {
+        #[cfg(unix)]
+        {
             vfs.create_dir_all("new1/new2").unwrap();
             assert!(vfs.exists("new1/new2"));
             vfs.remove_dir_all("new1/new2").unwrap();
@@ -294,7 +338,8 @@ mod tests {
             assert!(!vfs.exists("new1/new2"));
             assert!(!vfs.exists("new1"));
         }
-        #[cfg(windows)] {
+        #[cfg(windows)]
+        {
             vfs.create_dir_all(r"new1\new2").unwrap();
             assert!(vfs.exists(r"new1\new2"));
             vfs.remove_dir_all(r"new1\new2").unwrap();
