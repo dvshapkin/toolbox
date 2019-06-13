@@ -5,8 +5,9 @@
 Simple tools.
 
 ### vfs
-Virtual file system for convenient work with relative paths. \
-Tested on linux, windows.
+Virtual file system for convenient work with relative paths.
+
+<small>Tested on linux, windows.</small>
 
 ### alg
 *Search algorithms:*
