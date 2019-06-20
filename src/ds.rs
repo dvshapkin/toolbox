@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Formatter, Error};
+
 pub struct Matrix<T> {
     m: Vec<T>,
     width: usize,
@@ -5,12 +7,20 @@ pub struct Matrix<T> {
 }
 
 impl<T:Copy> Matrix<T> {
-    pub fn new(width: usize, height: usize) -> Matrix<T> {
+    pub fn new(height: usize, width: usize) -> Matrix<T> {
         Matrix { m: Vec::with_capacity(width * height), width, height }
     }
 
     pub fn count(&self) -> usize {
         self.width * self.height
+    }
+
+    pub fn row_count(&self) -> usize {
+        self.height
+    }
+
+    pub fn col_count(&self) -> usize {
+        self.width
     }
 
     pub fn fill(&mut self, value: T) {
@@ -31,6 +41,27 @@ impl<T:Copy> Matrix<T> {
             panic!("Index out of range.");
         }
         self.m[row * self.width + col] = value;
+    }
+
+    pub fn as_vec(&self) -> &Vec<T> {
+        &self.m
+    }
+}
+
+impl<T> Debug for Matrix<T>
+    where
+        T: Copy + Debug
+{
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        writeln!(f, "Matrix [");
+        for row in 0..self.height {
+            for col in 0..self.width {
+                write!(f, "\t{:?}", self.get(row, col));
+            }
+            writeln!(f);
+        }
+        writeln!(f, "]");
+        Ok(())
     }
 }
 
