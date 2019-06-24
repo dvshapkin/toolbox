@@ -2,7 +2,10 @@
 
 [![Crates.io](https://img.shields.io/crates/l/toolbox.svg)](https://github.com/torkve/shotwellvfs/blob/master/LICENSE)
 
-Simple tools.
+This project is no longer supported (**deprecated**).\
+It divided into two independent parts:
+ - if you need *virtual file system*, please use [**vfsys**](https://crates.io/crates/vfsys) crate.
+ - if you need *algorithms & data structures*, please use [**alg_ds**](https://crates.io/crates/alg_ds) crate.
 
 ### vfs
 Virtual file system for convenient work with relative paths.
