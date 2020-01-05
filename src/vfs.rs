@@ -4,9 +4,11 @@ use std::fs;
 use std::io::{Error, ErrorKind, Result};
 use std::path::{Component, Path, PathBuf};
 
+use std::fs::DirEntry;
+
 /// A reference to an virtual file system.
 pub struct VirtualFileSystem {
-    pub root: PathBuf,
+    root: PathBuf,
 }
 
 impl VirtualFileSystem {
@@ -49,7 +51,6 @@ impl VirtualFileSystem {
     }
 
     /// Returns true if the path points at an existing entity.
-    ///
     pub fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
         if let Some(path) = self.absolute(path) {
             path.exists()
@@ -73,7 +74,6 @@ impl VirtualFileSystem {
     }
 
     /// Creates a new, empty directory at the provided path.
-    ///
     pub fn create_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         match self.absolute(path) {
             Some(path) => {
@@ -85,7 +85,6 @@ impl VirtualFileSystem {
     }
 
     /// Recursively create a directory and all of its parent components if they are missing.
-    ///
     pub fn create_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         match self.absolute(path) {
             Some(path) => {
@@ -96,8 +95,7 @@ impl VirtualFileSystem {
         }
     }
 
-    /// Removes a directory at this path, after removing all its contents. Use carefully!
-    ///
+    /// Removes an existing, empty directory.
     pub fn remove_dir<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         match self.absolute(path) {
             Some(path) => {
@@ -109,7 +107,6 @@ impl VirtualFileSystem {
     }
 
     /// Removes a directory at this path, after removing all its contents. Use carefully!
-    ///
     pub fn remove_dir_all<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         match self.absolute(path) {
             Some(path) => {
@@ -120,7 +117,27 @@ impl VirtualFileSystem {
         }
     }
 
-    pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
+    /// Recursively traverses the contents of the directory and calls a callback for each item.
+    pub fn visit_all(&self, cb: &dyn Fn(&DirEntry)) -> Result<()> {
+
+        return recursive(&self.root, cb);
+
+        fn recursive(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<()> {
+            if dir.is_dir() {
+                for entry in fs::read_dir(dir)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.is_dir() {
+                        recursive(&path, cb)?;
+                    }
+                    cb(&entry);
+                }
+            }
+            Ok(())
+        }
+    }
+
+    fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
         match path.as_ref().components().count() {
             0 => PathBuf::from("."),
 
@@ -158,6 +175,7 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     use super::VirtualFileSystem;
+    //use std::fs::DirEntry;
 
     const ROOT: &str = "tests/root";
 
@@ -205,20 +223,20 @@ mod tests {
             PathBuf::from("first/second")
         );
         #[cfg(windows)]
-        {
-            assert_eq!(
-                VirtualFileSystem::normalize(r"\\?\C:\"),
-                PathBuf::from(r"\\?\C:\")
-            );
-            assert_eq!(
-                VirtualFileSystem::normalize(r"\\?\C:\."),
-                PathBuf::from(r"\\?\C:\")
-            );
-            assert_eq!(
-                VirtualFileSystem::normalize(cur_dir().join(r"more\..")),
-                PathBuf::from(cur_dir())
-            );
-        }
+            {
+                assert_eq!(
+                    VirtualFileSystem::normalize(r"\\?\C:\"),
+                    PathBuf::from(r"\\?\C:\")
+                );
+                assert_eq!(
+                    VirtualFileSystem::normalize(r"\\?\C:\."),
+                    PathBuf::from(r"\\?\C:\")
+                );
+                assert_eq!(
+                    VirtualFileSystem::normalize(cur_dir().join(r"more\..")),
+                    PathBuf::from(cur_dir())
+                );
+            }
     }
 
     #[test]
@@ -313,39 +331,47 @@ mod tests {
     fn create_dir_all_ok() {
         let vfs = new_vfs();
         #[cfg(unix)]
-        {
-            vfs.create_dir_all("new1/new2").unwrap();
-            assert!(vfs.exists("new1/new2"));
-            vfs.remove_dir_all("new1/new2").unwrap();
-        }
+            {
+                vfs.create_dir_all("new1/new2").unwrap();
+                assert!(vfs.exists("new1/new2"));
+                vfs.remove_dir_all("new1/new2").unwrap();
+            }
         #[cfg(windows)]
-        {
-            vfs.create_dir_all(r"new1\new2").unwrap();
-            assert!(vfs.exists(r"new1\new2"));
-            vfs.remove_dir_all(r"new1\new2").unwrap();
-        }
+            {
+                vfs.create_dir_all(r"new1\new2").unwrap();
+                assert!(vfs.exists(r"new1\new2"));
+                vfs.remove_dir_all(r"new1\new2").unwrap();
+            }
     }
 
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
         #[cfg(unix)]
-        {
-            vfs.create_dir_all("new1/new2").unwrap();
-            assert!(vfs.exists("new1/new2"));
-            vfs.remove_dir_all("new1/new2").unwrap();
-            vfs.remove_dir_all("new1").unwrap();
-            assert!(!vfs.exists("new1/new2"));
-            assert!(!vfs.exists("new1"));
-        }
+            {
+                vfs.create_dir_all("new1/new2").unwrap();
+                assert!(vfs.exists("new1/new2"));
+                vfs.remove_dir_all("new1/new2").unwrap();
+                vfs.remove_dir_all("new1").unwrap();
+                assert!(!vfs.exists("new1/new2"));
+                assert!(!vfs.exists("new1"));
+            }
         #[cfg(windows)]
-        {
-            vfs.create_dir_all(r"new1\new2").unwrap();
-            assert!(vfs.exists(r"new1\new2"));
-            vfs.remove_dir_all(r"new1\new2").unwrap();
-            vfs.remove_dir_all("new1").unwrap();
-            assert!(!vfs.exists(r"new1\new2"));
-            assert!(!vfs.exists("new1"));
-        }
+            {
+                vfs.create_dir_all(r"new1\new2").unwrap();
+                assert!(vfs.exists(r"new1\new2"));
+                vfs.remove_dir_all(r"new1\new2").unwrap();
+                vfs.remove_dir_all("new1").unwrap();
+                assert!(!vfs.exists(r"new1\new2"));
+                assert!(!vfs.exists("new1"));
+            }
     }
+
+//    #[test]
+//    fn visit_all_ok() {
+//        let vfs = VirtualFileSystem::try_new(r"C:\dev\Exercism").unwrap();
+//        vfs.visit_all(&|entry: &DirEntry| {
+//            println!("{:?}", entry.path());
+//        }).unwrap();
+//    }
 }
