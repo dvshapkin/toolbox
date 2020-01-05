@@ -1,11 +1,8 @@
-# toolbox::{vfs, alg}
+# toolbox::{alg, ds, vfs}
 
 [![Crates.io](https://img.shields.io/crates/l/toolbox.svg)](https://github.com/torkve/shotwellvfs/blob/master/LICENSE)
 
 <small>Tested on linux, windows.</small>
-
-### vfs
-Virtual file system for convenient work with relative paths.
 
 ### alg
 *Search algorithms:*
@@ -22,3 +19,9 @@ Virtual file system for convenient work with relative paths.
 <tr><td>selection</td> <td>O(n<sup><small>2</small></sup>)</td></tr>
 <tr><td>quick</td> <td>O(n log<sub><small>2</small></sub>n)</td></tr>
 </table>
+
+### ds
+*Graph* data structure
+
+### vfs
+Virtual file system for convenient work with relative paths.

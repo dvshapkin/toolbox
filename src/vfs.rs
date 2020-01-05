@@ -12,7 +12,7 @@ pub struct VirtualFileSystem {
 }
 
 impl VirtualFileSystem {
-    /// Create new `VirtualFileSystem`.
+    /// Creates new `VirtualFileSystem`.
     ///
     /// `root` - base directory for VFS.
     /// A `root` path must exists; else return value will be `io::Error`.
