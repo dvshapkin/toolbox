@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 use std::{alloc, mem};
 
-/// Rectangular table of elements.
+/// Rectangular table of elements (two-dimensional array).
 ///
 pub struct Matrix<'a, T>
 where
@@ -17,8 +17,8 @@ where
 {
     /// Creates new Matrix.
     ///
-    /// `rows` - rows count
-    /// `cols` - columns count
+    /// `rows` - rows number.
+    /// `cols` - columns number.
     /// Panic, if memory allocation is not succesfully.
     pub fn new(rows: usize, cols: usize) -> Self {
         Self {
@@ -39,19 +39,19 @@ where
         Self::fill_with(self.buffer, value);
     }
 
-    /// Returns rows counts.
+    /// Returns rows number.
     ///
     pub fn rows(&self) -> usize {
         self.buffer.len() / self.cols
     }
 
-    /// Returns columns counts.
+    /// Returns columns number.
     ///
     pub fn cols(&self) -> usize {
         self.cols
     }
 
-    /// Returns value of item at [row, col] position.
+    /// Returns value at [row][col] position.
     ///
     /// There are bounds checking.
     /// If index out of range, then panic.
@@ -60,7 +60,7 @@ where
         &self.buffer[self.linear_index(row, col)]
     }
 
-    /// Sets the `value` to [row, col] position.
+    /// Sets the `value` of element at [row][col] position.
     ///
     /// There are bounds checking.
     /// If index out of range, then panic.
