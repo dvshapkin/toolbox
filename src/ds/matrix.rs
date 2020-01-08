@@ -56,7 +56,6 @@ where
     /// There are bounds checking.
     /// If index out of range, then panic.
     pub fn get(&self, row: usize, col: usize) -> &T {
-        self.check_index(row, col);
         &self.buffer[self.linear_index(row, col)]
     }
 
@@ -65,7 +64,6 @@ where
     /// There are bounds checking.
     /// If index out of range, then panic.
     pub fn set(&mut self, row: usize, col: usize, value: T) {
-        self.check_index(row, col);
         self.buffer[self.linear_index(row, col)] = value;
     }
 
@@ -88,13 +86,10 @@ where
         }
     }
 
-    fn check_index(&self, row: usize, col: usize) {
+    fn linear_index(&self, row: usize, col: usize) -> usize {
         if row >= self.rows() || col >= self.cols {
             panic!("index out of bounds");
         }
-    }
-
-    fn linear_index(&self, row: usize, col: usize) -> usize {
         row * self.cols + col
     }
 }
