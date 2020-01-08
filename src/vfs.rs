@@ -119,7 +119,6 @@ impl VirtualFileSystem {
 
     /// Recursively traverses the contents of the directory and calls a callback for each item.
     pub fn visit_all(&self, cb: &dyn Fn(&DirEntry)) -> Result<()> {
-
         return recursive(&self.root, cb);
 
         fn recursive(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<()> {
@@ -223,20 +222,20 @@ mod tests {
             PathBuf::from("first/second")
         );
         #[cfg(windows)]
-            {
-                assert_eq!(
-                    VirtualFileSystem::normalize(r"\\?\C:\"),
-                    PathBuf::from(r"\\?\C:\")
-                );
-                assert_eq!(
-                    VirtualFileSystem::normalize(r"\\?\C:\."),
-                    PathBuf::from(r"\\?\C:\")
-                );
-                assert_eq!(
-                    VirtualFileSystem::normalize(cur_dir().join(r"more\..")),
-                    PathBuf::from(cur_dir())
-                );
-            }
+        {
+            assert_eq!(
+                VirtualFileSystem::normalize(r"\\?\C:\"),
+                PathBuf::from(r"\\?\C:\")
+            );
+            assert_eq!(
+                VirtualFileSystem::normalize(r"\\?\C:\."),
+                PathBuf::from(r"\\?\C:\")
+            );
+            assert_eq!(
+                VirtualFileSystem::normalize(cur_dir().join(r"more\..")),
+                PathBuf::from(cur_dir())
+            );
+        }
     }
 
     #[test]
@@ -331,47 +330,47 @@ mod tests {
     fn create_dir_all_ok() {
         let vfs = new_vfs();
         #[cfg(unix)]
-            {
-                vfs.create_dir_all("new1/new2").unwrap();
-                assert!(vfs.exists("new1/new2"));
-                vfs.remove_dir_all("new1/new2").unwrap();
-            }
+        {
+            vfs.create_dir_all("new1/new2").unwrap();
+            assert!(vfs.exists("new1/new2"));
+            vfs.remove_dir_all("new1/new2").unwrap();
+        }
         #[cfg(windows)]
-            {
-                vfs.create_dir_all(r"new1\new2").unwrap();
-                assert!(vfs.exists(r"new1\new2"));
-                vfs.remove_dir_all(r"new1\new2").unwrap();
-            }
+        {
+            vfs.create_dir_all(r"new1\new2").unwrap();
+            assert!(vfs.exists(r"new1\new2"));
+            vfs.remove_dir_all(r"new1\new2").unwrap();
+        }
     }
 
     #[test]
     fn remove_dir_all_ok() {
         let vfs = new_vfs();
         #[cfg(unix)]
-            {
-                vfs.create_dir_all("new1/new2").unwrap();
-                assert!(vfs.exists("new1/new2"));
-                vfs.remove_dir_all("new1/new2").unwrap();
-                vfs.remove_dir_all("new1").unwrap();
-                assert!(!vfs.exists("new1/new2"));
-                assert!(!vfs.exists("new1"));
-            }
+        {
+            vfs.create_dir_all("new1/new2").unwrap();
+            assert!(vfs.exists("new1/new2"));
+            vfs.remove_dir_all("new1/new2").unwrap();
+            vfs.remove_dir_all("new1").unwrap();
+            assert!(!vfs.exists("new1/new2"));
+            assert!(!vfs.exists("new1"));
+        }
         #[cfg(windows)]
-            {
-                vfs.create_dir_all(r"new1\new2").unwrap();
-                assert!(vfs.exists(r"new1\new2"));
-                vfs.remove_dir_all(r"new1\new2").unwrap();
-                vfs.remove_dir_all("new1").unwrap();
-                assert!(!vfs.exists(r"new1\new2"));
-                assert!(!vfs.exists("new1"));
-            }
+        {
+            vfs.create_dir_all(r"new1\new2").unwrap();
+            assert!(vfs.exists(r"new1\new2"));
+            vfs.remove_dir_all(r"new1\new2").unwrap();
+            vfs.remove_dir_all("new1").unwrap();
+            assert!(!vfs.exists(r"new1\new2"));
+            assert!(!vfs.exists("new1"));
+        }
     }
 
-//    #[test]
-//    fn visit_all_ok() {
-//        let vfs = VirtualFileSystem::try_new(r"C:\dev\Exercism").unwrap();
-//        vfs.visit_all(&|entry: &DirEntry| {
-//            println!("{:?}", entry.path());
-//        }).unwrap();
-//    }
+    //    #[test]
+    //    fn visit_all_ok() {
+    //        let vfs = VirtualFileSystem::try_new(r"C:\dev\Exercism").unwrap();
+    //        vfs.visit_all(&|entry: &DirEntry| {
+    //            println!("{:?}", entry.path());
+    //        }).unwrap();
+    //    }
 }

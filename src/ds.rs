@@ -1,3 +1,5 @@
-//! Graph data structure
+//! Common data structure
 
-pub mod graph;
+pub mod matrix;
+//pub mod graph;
+

@@ -21,7 +21,7 @@
 </table>
 
 ### ds
-*Graph* data structure
+*Matrix* data structure (two-dimensional array)
 
 ### vfs
 Virtual file system for convenient work with relative paths.

@@ -1,6 +1,6 @@
 [package]
 name = "toolbox"
-version = "0.1.8"
+version = "0.2.0"
 authors = ["dvshapkin <dvshapkin@mail.ru>"]
 edition = "2018"
 
@@ -12,7 +12,7 @@ documentation = "https://docs.rs/toolbox"
 homepage = "https://github.com/dvshapkin/toolbox"
 repository = "https://github.com/dvshapkin/toolbox"
 
-keywords = ["tools", "vfs", "graph", "algorithm"]
+keywords = ["tools", "vfs", "algorithm", "data structure", "matrix"]
 
 license = "Apache-2.0"
 
