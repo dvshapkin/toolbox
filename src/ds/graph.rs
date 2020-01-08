@@ -1,19 +1,18 @@
-
 /// Edge of the graph.
-/// 
+///
 /// `item.0` - a first node
 /// `item.1` - a second node
 /// Direction of link: first <- second
 /// `item.2` - a node weight (optional)
-struct Edge (usize, usize, Option<f64>);
+struct Edge(usize, usize, Option<f64>);
 
 /// Node of the graph.
-/// 
+///
 /// `id` - unique identifier
 /// `data` (optional) - some type of data
 pub struct Node<T> {
     id: usize,
-    pub data: Option<T>
+    pub data: Option<T>,
 }
 
 pub struct Graph<T> {
@@ -21,26 +20,36 @@ pub struct Graph<T> {
     nodes: Vec<Node<T>>,
     edges: Vec<Edge>,
     next_id: usize,
-    modified: bool
+    modified: bool,
 }
 
 impl<T> Graph<T> {
-    
     /// Creates new `Graph`.
-    /// 
+    ///
     /// `oriented` - if `true`, then graph is oriented
     pub fn new(oriented: bool) -> Graph<T> {
-        Graph { oriented, nodes: Vec::new(), edges: Vec::new(), next_id: 0, modified: false }
+        Graph {
+            oriented,
+            nodes: Vec::new(),
+            edges: Vec::new(),
+            next_id: 0,
+            modified: false,
+        }
     }
 
     /// Adds a new node into graph.
-    /// 
+    ///
     /// `data` (optional) - a nodes data
     /// Optional adds a link: `linked_from` -> new node.
     /// If graph is not oriented then also adds a mirror link: `linked_from` <- new node.
     /// `weight` (optional) - weight of the link
     /// Return ID of the new node.
-    pub fn add_node(&mut self, data: Option<T>, linked_from: Option<usize>, weight: Option<f64>) -> usize {
+    pub fn add_node(
+        &mut self,
+        data: Option<T>,
+        linked_from: Option<usize>,
+        weight: Option<f64>,
+    ) -> usize {
         let id = self.next_id;
         self.next_id += 1;
         self.nodes.push(Node { id, data });
@@ -52,37 +61,37 @@ impl<T> Graph<T> {
     }
 
     /// Adds a new link between `from` and `to` nodes
-    /// 
+    ///
     /// If graph is not oriented then also adds a mirror link: `from` <- `to`.
     /// `weight` (optional) - weight of the link
     pub fn add_link(&mut self, from: usize, to: usize, weight: Option<f64>) {
-        self.edges.push( Edge(to, from, weight) );
-        if !self.oriented { 
-            self.edges.push( Edge(from, to, weight) );
+        self.edges.push(Edge(to, from, weight));
+        if !self.oriented {
+            self.edges.push(Edge(from, to, weight));
         }
         self.modified = true;
     }
 
     /// Check if graph is oriented.
-    /// 
+    ///
     pub fn is_oriented(&self) -> bool {
         self.oriented
     }
 
     /// Check if graph is empty.
-    /// 
+    ///
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
 
     /// Returns count of nodes.
-    /// 
+    ///
     pub fn nodes_count(&self) -> usize {
         self.nodes.len()
     }
 
     /// Returns count of edges (links).
-    /// 
+    ///
     pub fn edges_count(&self) -> usize {
         if self.oriented {
             self.edges.len()
@@ -92,7 +101,7 @@ impl<T> Graph<T> {
     }
 
     /// Removes node from graph by `id`.
-    /// 
+    ///
     /// This removal occurs with logarithmic complexity.
     pub fn remove_node(&mut self, id: usize) {
         if let Some(idx) = self.index_of(id) {
@@ -102,12 +111,10 @@ impl<T> Graph<T> {
     }
 
     /// Gets index of the node by `id`.
-    /// 
+    ///
     /// Search occurs with logarithmic complexity.
     fn index_of(&self, id: usize) -> Option<usize> {
-        self.nodes.binary_search_by(
-            |node| node.id.cmp(&id)
-        ).ok()
+        self.nodes.binary_search_by(|node| node.id.cmp(&id)).ok()
     }
 }
 
