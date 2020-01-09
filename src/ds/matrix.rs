@@ -15,7 +15,7 @@ impl<'a, T> Matrix<'a, T>
 where
     T: Default + Clone,
 {
-    /// Creates new Matrix.
+    /// Creates new Matrix and fills it with default values.
     ///
     /// `rows` - rows number.
     /// `cols` - columns number.
@@ -132,6 +132,19 @@ where
     }
 }
 
+impl <'a, T> Clone for Matrix<'a, T>
+where
+    T: Default + Clone,
+{
+    fn clone(&self) -> Self {
+        let m = Matrix { cols: self.cols, buffer: Self::alloc(self.rows(), self.cols()) };
+        for idx in 0..self.buffer.len() {
+            m.buffer[idx] = self.buffer[idx].clone();
+        }
+        m
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -181,6 +194,25 @@ mod tests {
         assert_eq!(m.get(1, 1), &777);
         m[0][0] = m[1][1] - 111;
         assert_eq!(m.get(0, 0), &666);
+    }
+
+    #[test]
+    fn clone_ok() {
+        // numbers
+        let mut a = Matrix::<i32>::new(2, 3);
+        a.fill(100);
+        let b = a.clone();
+        a.fill(200);
+        assert_eq_all(&b, 100);
+        assert_eq_all(&a, 200);
+        
+        // Strings
+        let mut s1 = Matrix::<String>::new(2, 3);
+        s1.fill(String::from("first"));
+        let s2 = s1.clone();
+        s1.fill(String::from("second"));
+        assert_eq_all(&s2, String::from("first"));
+        assert_eq_all(&s1, String::from("second"));
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
