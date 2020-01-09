@@ -132,7 +132,7 @@ where
     }
 }
 
-impl <'a, T> Clone for Matrix<'a, T>
+impl<'a, T> Clone for Matrix<'a, T>
 where
     T: Default + Clone,
 {
@@ -144,6 +144,17 @@ where
         Matrix { cols: self.cols, buffer: new_buf }
     }
 }
+
+// impl<'a, T> Iterator for Matrix<'a, T>
+// where
+//     T: Default + Clone,
+// {
+//     type Item = &'a T;
+    
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.buffer.iter().next()
+//     }
+// } 
 
 #[cfg(test)]
 mod tests {
