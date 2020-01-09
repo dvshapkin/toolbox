@@ -137,11 +137,11 @@ where
     T: Default + Clone,
 {
     fn clone(&self) -> Self {
-        let m = Matrix { cols: self.cols, buffer: Self::alloc(self.rows(), self.cols()) };
+        let new_buf = Self::alloc(self.rows(), self.cols());
         for idx in 0..self.buffer.len() {
-            m.buffer[idx] = self.buffer[idx].clone();
+            new_buf[idx] = self.buffer[idx].clone();
         }
-        m
+        Matrix { cols: self.cols, buffer: new_buf }
     }
 }
 
