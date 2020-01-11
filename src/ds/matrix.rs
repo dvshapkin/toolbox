@@ -51,6 +51,12 @@ where
         self.cols
     }
 
+    /// Returns number of elements in matrix.
+    /// 
+    pub fn elements_number(&self) -> usize {
+        self.buffer.len()
+    }
+
     /// Returns value at [row][col] position.
     ///
     /// There are bounds checking.
@@ -66,6 +72,12 @@ where
     pub fn set(&mut self, row: usize, col: usize, value: T) {
         self.buffer[self.linear_index(row, col)] = value;
     }
+
+    /// Iterator over matrix.
+    /// 
+    pub fn iter(&'a self) -> Iter<'a, T> {
+        Iter { collection: self.buffer, current: 0 }
+    } 
 
     /// Memory allocation for data buffer.
     ///
@@ -145,16 +157,29 @@ where
     }
 }
 
-// impl<'a, T> Iterator for Matrix<'a, T>
-// where
-//     T: Default + Clone,
-// {
-//     type Item = &'a T;
+pub struct Iter<'a, T>
+where
+    T: Default + Clone,
+{
+    collection: &'a [T],
+    current: usize
+}
+
+impl<'a, T> Iterator for Iter<'a, T>
+where
+     T: Default + Clone,
+{
+    type Item = &'a T;
     
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.buffer.iter().next()
-//     }
-// } 
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current < self.collection.len() {
+            self.current += 1;
+            Some(&self.collection[self.current - 1])
+        } else {
+            None
+        }
+    }
+} 
 
 #[cfg(test)]
 mod tests {
@@ -224,6 +249,18 @@ mod tests {
         s1.fill(String::from("second"));
         assert_eq_all(&s2, String::from("first"));
         assert_eq_all(&s1, String::from("second"));
+    }
+
+    #[test]
+    fn iter_ok() {
+        let mut m = Matrix::<i32>::new(2, 3);
+        m.fill(7);
+        let mut count = 0;
+        for e in m.iter() {
+            assert_eq!(e, &7);
+            count += 1;
+        }
+        assert_eq!(count, m.elements_number());
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
