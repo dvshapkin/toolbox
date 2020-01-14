@@ -1,5 +1,6 @@
 use std::ops::{Index, IndexMut};
 use std::{alloc, mem};
+use std::slice::{Iter, IterMut};
 
 /// Rectangular table of elements (two-dimensional array).
 ///
@@ -76,8 +77,14 @@ where
     /// Iterator over matrix.
     /// 
     pub fn iter(&'a self) -> Iter<'a, T> {
-        Iter { collection: self.buffer, current: 0 }
+        self.buffer.iter()
     } 
+
+    /// Mutable iterator over matrix.
+    /// 
+    pub fn iter_mut(&'a mut self) -> IterMut<'a, T> {
+        self.buffer.iter_mut()
+    }
 
     /// Memory allocation for data buffer.
     ///
@@ -156,30 +163,6 @@ where
         Matrix { cols: self.cols, buffer: new_buf }
     }
 }
-
-pub struct Iter<'a, T>
-where
-    T: Default + Clone,
-{
-    collection: &'a [T],
-    current: usize
-}
-
-impl<'a, T> Iterator for Iter<'a, T>
-where
-     T: Default + Clone,
-{
-    type Item = &'a T;
-    
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current < self.collection.len() {
-            self.current += 1;
-            Some(&self.collection[self.current - 1])
-        } else {
-            None
-        }
-    }
-} 
 
 #[cfg(test)]
 mod tests {
@@ -262,6 +245,16 @@ mod tests {
         }
         assert_eq!(count, m.elements_number());
     }
+
+    // #[test]
+    // fn iter_mut_ok() {
+    //     let mut m = Matrix::<i32>::new(2, 3);
+    //     {
+    //         for e in m.iter_mut() {
+    //             *e = 7;
+    //         }
+    //     }
+    // }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
         for i in 0..m.rows() {
