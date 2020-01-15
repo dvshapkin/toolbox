@@ -1,5 +1,5 @@
 use std::ops::{Index, IndexMut};
-use std::{alloc, mem};
+use std::{alloc, mem, fmt};
 use std::slice::{Iter, IterMut};
 
 /// Rectangular table of elements (two-dimensional array).
@@ -76,13 +76,13 @@ where
 
     /// Iterator over matrix.
     /// 
-    pub fn iter(&'a self) -> Iter<'a, T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.buffer.iter()
     } 
 
     /// Mutable iterator over matrix.
     /// 
-    pub fn iter_mut(&'a mut self) -> IterMut<'a, T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.buffer.iter_mut()
     }
 
@@ -131,6 +131,19 @@ fn layout<T>(size: usize) -> Result<alloc::Layout, alloc::LayoutErr> {
     alloc::Layout::from_size_align(size * mem::size_of::<T>(), mem::align_of::<T>())
 }
 
+impl<'a, T> PartialEq for Matrix<'a, T>
+where
+    T: Default + Clone + PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        if self.cols == other.cols && self.buffer == other.buffer {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 impl<'a, T> Index<usize> for Matrix<'a, T>
 where
     T: Default + Clone,
@@ -161,6 +174,32 @@ where
             new_buf[idx] = self.buffer[idx].clone();
         }
         Matrix { cols: self.cols, buffer: new_buf }
+    }
+}
+
+impl<'a, T> fmt::Debug for Matrix<'a, T>
+where
+    T: Default + Clone + fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{")?;
+        for i in 0..self.rows() {
+            if i > 0 {
+                write!(f, " ")?;
+            }
+            write!(f, "{{")?;
+            for j in 0..self.cols() {
+                write!(f, "{}", self[i][j])?;
+                if j + 1 < self.cols() {
+                    write!(f, ",")?;
+                }
+            }
+            write!(f, "}}")?;
+            if i + 1 < self.rows() {
+                writeln!(f)?;
+            }
+        }
+        write!(f, "}}")
     }
 }
 
@@ -235,6 +274,13 @@ mod tests {
     }
 
     #[test]
+    fn debug_ok() {
+        let mut a = Matrix::<i32>::new(3, 3);
+        a.fill(2);
+        println!("{:?}", a);
+    }
+
+    #[test]
     fn iter_ok() {
         let mut m = Matrix::<i32>::new(2, 3);
         m.fill(7);
@@ -246,15 +292,16 @@ mod tests {
         assert_eq!(count, m.elements_number());
     }
 
-    // #[test]
-    // fn iter_mut_ok() {
-    //     let mut m = Matrix::<i32>::new(2, 3);
-    //     {
-    //         for e in m.iter_mut() {
-    //             *e = 7;
-    //         }
-    //     }
-    // }
+    #[test]
+    fn iter_mut_ok() {
+        let mut m1 = Matrix::<i32>::new(2, 3);
+        for e in m1.iter_mut() {
+            *e = 7;
+        }
+        let mut m2 = Matrix::<i32>::new(2, 3);
+        m2.fill(7);
+        assert_eq!(m1, m2);
+    }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
         for i in 0..m.rows() {
