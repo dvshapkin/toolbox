@@ -58,6 +58,12 @@ where
         self.buffer.len()
     }
 
+    /// Returns the n-th element of the table in line traversal order.
+    /// 
+    pub fn nth(&self, index: usize) -> &T {
+        &self.buffer[index]
+    }
+
     /// Returns value at [row][col] position.
     ///
     /// There are bounds checking.
@@ -74,13 +80,13 @@ where
         self.buffer[self.linear_index(row, col)] = value;
     }
 
-    /// Iterator over matrix.
+    /// Iterator over matrix in line traversal order.
     /// 
     pub fn iter(&self) -> Iter<'_, T> {
         self.buffer.iter()
     } 
 
-    /// Mutable iterator over matrix.
+    /// Mutable iterator over matrix in line traversal order.
     /// 
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.buffer.iter_mut()
