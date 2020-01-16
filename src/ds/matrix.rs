@@ -1,5 +1,5 @@
 use std::ops::{Index, IndexMut};
-use std::{alloc, mem, fmt};
+use std::{alloc, mem, fmt, ops};
 use std::slice::{Iter, IterMut};
 
 /// Rectangular table of elements (two-dimensional array).
@@ -209,6 +209,21 @@ where
     }
 }
 
+impl<'a, T> ops::Add for Matrix<'a, T>
+where
+    T: Default + Clone + ops::Add<Output=T>,
+{
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let result = Self::new(self.rows(), self.cols());
+        for idx in 0..self.elements_number() {
+            result.buffer[idx] = self.buffer[idx].clone() + other.buffer[idx].clone();
+        }
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -307,6 +322,16 @@ mod tests {
         let mut m2 = Matrix::<i32>::new(2, 3);
         m2.fill(7);
         assert_eq!(m1, m2);
+    }
+
+    #[test]
+    fn add_ok() {
+        let mut a = Matrix::<i32>::new(2, 3);
+        a.fill(7);
+        let mut b = Matrix::<i32>::new(2, 3);
+        b.fill(5);
+        let c = a + b;
+        assert_eq_all(&c, 12);
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
