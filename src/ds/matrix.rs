@@ -224,6 +224,21 @@ where
     }
 }
 
+impl<'a, T> ops::Sub for Matrix<'a, T>
+where
+    T: Default + Clone + ops::Sub<Output=T>,
+{
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        let result = Self::new(self.rows(), self.cols());
+        for idx in 0..self.elements_number() {
+            result.buffer[idx] = self.buffer[idx].clone() - other.buffer[idx].clone();
+        }
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
