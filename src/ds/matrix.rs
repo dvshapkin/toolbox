@@ -224,6 +224,21 @@ where
     }
 }
 
+impl<'a, T> ops::Sub for Matrix<'a, T>
+where
+    T: Default + Clone + ops::Sub<Output=T>,
+{
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        let result = Self::new(self.rows(), self.cols());
+        for idx in 0..self.elements_number() {
+            result.buffer[idx] = self.buffer[idx].clone() - other.buffer[idx].clone();
+        }
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -332,6 +347,16 @@ mod tests {
         b.fill(5);
         let c = a + b;
         assert_eq_all(&c, 12);
+    }
+
+    #[test]
+    fn sub_ok() {
+        let mut a = Matrix::<i32>::new(2, 3);
+        a.fill(7);
+        let mut b = Matrix::<i32>::new(2, 3);
+        b.fill(5);
+        let c = a - b;
+        assert_eq_all(&c, 2);
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
