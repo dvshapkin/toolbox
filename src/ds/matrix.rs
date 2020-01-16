@@ -239,6 +239,21 @@ where
     }
 }
 
+impl<'a, T> ops::Mul<T> for Matrix<'a, T>
+where
+    T: Default + Clone + ops::Mul<Output=T>,
+{
+    type Output = Self;
+
+    fn mul(self, value: T) -> Self {
+        let result = Self::new(self.rows(), self.cols());
+        for idx in 0..self.elements_number() {
+            result.buffer[idx] = self.buffer[idx].clone() * value.clone();
+        }
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -357,6 +372,14 @@ mod tests {
         b.fill(5);
         let c = a - b;
         assert_eq_all(&c, 2);
+    }
+
+    #[test]
+    fn mul_ok() {
+        let mut a = Matrix::<i32>::new(2, 3);
+        a.fill(7);
+        let b = a * 10;
+        assert_eq_all(&b, 70);
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
