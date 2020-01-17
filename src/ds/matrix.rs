@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
-use std::{alloc, mem, fmt, ops};
 use std::slice::{Iter, IterMut};
+use std::{alloc, fmt, mem, ops};
 
 /// Rectangular table of elements (two-dimensional array).
 ///
@@ -53,13 +53,13 @@ where
     }
 
     /// Returns number of elements in matrix.
-    /// 
+    ///
     pub fn elements_number(&self) -> usize {
         self.buffer.len()
     }
 
     /// Returns the n-th element of the table in line traversal order.
-    /// 
+    ///
     pub fn nth(&self, index: usize) -> &T {
         &self.buffer[index]
     }
@@ -81,13 +81,13 @@ where
     }
 
     /// Iterator over matrix in line traversal order.
-    /// 
+    ///
     pub fn iter(&self) -> Iter<'_, T> {
         self.buffer.iter()
-    } 
+    }
 
     /// Mutable iterator over matrix in line traversal order.
-    /// 
+    ///
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.buffer.iter_mut()
     }
@@ -179,7 +179,10 @@ where
         for idx in 0..self.buffer.len() {
             new_buf[idx] = self.buffer[idx].clone();
         }
-        Matrix { cols: self.cols, buffer: new_buf }
+        Matrix {
+            cols: self.cols,
+            buffer: new_buf,
+        }
     }
 }
 
@@ -211,7 +214,7 @@ where
 
 impl<'a, T> ops::Add for Matrix<'a, T>
 where
-    T: Default + Clone + ops::Add<Output=T>,
+    T: Default + Clone + ops::Add<Output = T>,
 {
     type Output = Self;
 
@@ -226,7 +229,7 @@ where
 
 impl<'a, T> ops::Sub for Matrix<'a, T>
 where
-    T: Default + Clone + ops::Sub<Output=T>,
+    T: Default + Clone + ops::Sub<Output = T>,
 {
     type Output = Self;
 
@@ -241,7 +244,7 @@ where
 
 impl<'a, T> ops::Mul<T> for Matrix<'a, T>
 where
-    T: Default + Clone + ops::Mul<Output=T>,
+    T: Default + Clone + ops::Mul<Output = T>,
 {
     type Output = Self;
 
@@ -314,7 +317,7 @@ mod tests {
         a.fill(200);
         assert_eq_all(&b, 100);
         assert_eq_all(&a, 200);
-        
+
         // Strings
         let mut s1 = Matrix::<String>::new(2, 3);
         s1.fill(String::from("first"));

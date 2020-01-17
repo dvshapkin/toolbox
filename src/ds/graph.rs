@@ -1,39 +1,52 @@
-/// Edge of the graph.
-///
-/// `item.0` - a first node
-/// `item.1` - a second node
-/// Direction of link: first <- second
-/// `item.2` - a node weight (optional)
-struct Edge(usize, usize, Option<f64>);
+use std::collections::HashMap;
 
 /// Node of the graph.
 ///
 /// `id` - unique identifier
-/// `data` (optional) - some type of data
+/// `data` (optional) - data of some type
 pub struct Node<T> {
     id: usize,
     pub data: Option<T>,
 }
 
-pub struct Graph<T> {
-    oriented: bool,
-    nodes: Vec<Node<T>>,
-    edges: Vec<Edge>,
-    next_id: usize,
-    modified: bool,
+impl<T> Node<T> {
+    /// Gets an *id* of the node
+    /// 
+    pub fn id(&self) -> usize {
+        self.id
+    }
 }
 
-impl<T> Graph<T> {
+/// Edge of the graph.
+///
+/// `linked` - *id* of linked node
+/// `weight` - an edge weight
+pub struct Edge<W: Clone> {
+    linked: usize,
+    pub weight: Option<W>,
+}
+
+/// Graph data structure.
+/// `T` - type of the data of graph nodes.
+/// `W` - type of the *weight* of edges.
+pub struct Graph<T, W: Clone> {
+    oriented: bool,
+    nodes: Vec<Option<Node<T>>>,
+    links: HashMap<usize, Vec<Edge<W>>>,
+}
+
+impl<T, W> Graph<T, W>
+where
+    W: Clone,
+{
     /// Creates new `Graph`.
     ///
     /// `oriented` - if `true`, then graph is oriented
-    pub fn new(oriented: bool) -> Graph<T> {
+    pub fn new(oriented: bool) -> Graph<T, W> {
         Graph {
             oriented,
             nodes: Vec::new(),
-            edges: Vec::new(),
-            next_id: 0,
-            modified: false,
+            links: HashMap::new(),
         }
     }
 
@@ -48,15 +61,14 @@ impl<T> Graph<T> {
         &mut self,
         data: Option<T>,
         linked_from: Option<usize>,
-        weight: Option<f64>,
+        weight: Option<W>,
     ) -> usize {
-        let id = self.next_id;
-        self.next_id += 1;
-        self.nodes.push(Node { id, data });
+        let id = self.nodes.len();
+        self.nodes.push(Some(Node { id, data }));
+        self.links.insert(id, Vec::new());
         if let Some(linked) = linked_from {
             self.add_link(linked, id, weight);
         }
-        self.modified = true;
         id
     }
 
@@ -64,12 +76,21 @@ impl<T> Graph<T> {
     ///
     /// If graph is not oriented then also adds a mirror link: `from` <- `to`.
     /// `weight` (optional) - weight of the link
-    pub fn add_link(&mut self, from: usize, to: usize, weight: Option<f64>) {
-        self.edges.push(Edge(to, from, weight));
-        if !self.oriented {
-            self.edges.push(Edge(from, to, weight));
+    pub fn add_link(&mut self, from: usize, to: usize, weight: Option<W>) {
+        if let Some(list) = self.links.get_mut(&from) {
+            list.push(Edge {
+                linked: to,
+                weight: weight.clone(),
+            });
+            if !self.oriented {
+                if let Some(list) = self.links.get_mut(&to) {
+                    list.push(Edge {
+                        linked: from,
+                        weight: weight.clone(),
+                    });
+                }
+            }
         }
-        self.modified = true;
     }
 
     /// Check if graph is oriented.
@@ -81,41 +102,42 @@ impl<T> Graph<T> {
     /// Check if graph is empty.
     ///
     pub fn is_empty(&self) -> bool {
-        self.nodes.is_empty()
+        self.nodes_count() == 0
     }
 
     /// Returns count of nodes.
     ///
     pub fn nodes_count(&self) -> usize {
-        self.nodes.len()
+        let mut count = 0;
+        for node in &self.nodes {
+            if let Some(_) = node {
+                count += 1;
+            }
+        }
+        count
     }
 
     /// Returns count of edges (links).
     ///
     pub fn edges_count(&self) -> usize {
+        let mut count = 0;
+        for v in self.links.values() {
+            count += v.len();
+        }
         if self.oriented {
-            self.edges.len()
+            count
         } else {
-            self.edges.len() / 2
+            count / 2
         }
     }
 
-    /// Removes node from graph by `id`.
-    ///
-    /// This removal occurs with logarithmic complexity.
-    pub fn remove_node(&mut self, id: usize) {
-        if let Some(idx) = self.index_of(id) {
-            self.nodes.remove(idx);
-        }
-        self.modified = true;
-    }
-
-    /// Gets index of the node by `id`.
-    ///
-    /// Search occurs with logarithmic complexity.
-    fn index_of(&self, id: usize) -> Option<usize> {
-        self.nodes.binary_search_by(|node| node.id.cmp(&id)).ok()
-    }
+    // Removes node from graph by `id`.
+    //
+    // This removal occurs with constant complexity O(1)~
+    // pub fn remove_node(&mut self, id: usize) {
+    //     self.nodes[id] = None;
+    //     self.links.remove(&id);
+    // }
 }
 
 #[cfg(test)]
@@ -124,24 +146,22 @@ mod tests {
 
     #[test]
     fn new_ok() {
-        let g = Graph::<&str>::new(true);
+        let g = Graph::<&str, usize>::new(true);
         assert_eq!(g.oriented, true);
-        assert_eq!(g.modified, false);
-        assert_eq!(g.next_id, 0);
         assert_eq!(g.nodes.len(), 0);
-        assert_eq!(g.edges.len(), 0);
+        assert_eq!(g.links.len(), 0);
     }
 
     #[test]
     fn is_oriented_ok() {
-        let g = Graph::<&str>::new(true);
+        let g = Graph::<&str, usize>::new(true);
         assert_eq!(g.oriented, true);
         assert_eq!(g.is_oriented(), true);
     }
 
     #[test]
     fn is_empty_ok() {
-        let mut g = Graph::<&str>::new(true);
+        let mut g = Graph::<&str, usize>::new(true);
         assert_eq!(g.is_empty(), true);
         g.add_node(None, None, None);
         assert_eq!(g.is_empty(), false);
@@ -149,7 +169,7 @@ mod tests {
 
     #[test]
     fn add_node_ok() {
-        let mut g = Graph::<&str>::new(true);
+        let mut g = Graph::<&str, usize>::new(true);
         let mut id = g.add_node(Some("First"), None, None);
         assert_eq!(id, 0);
         id = g.add_node(Some("Second"), Some(0), None);
@@ -161,7 +181,7 @@ mod tests {
     #[test]
     fn add_link_ok() {
         // oriented
-        let mut g = Graph::<&str>::new(true);
+        let mut g = Graph::<&str, usize>::new(true);
         let mut id = g.add_node(Some("First"), None, None);
         assert_eq!(id, 0);
         id = g.add_node(Some("Second"), Some(0), None);
@@ -171,7 +191,7 @@ mod tests {
         assert_eq!(g.edges_count(), 2);
 
         // not oriented
-        let mut g = Graph::<&str>::new(false);
+        let mut g = Graph::<&str, usize>::new(false);
         let mut id = g.add_node(Some("First"), None, None);
         assert_eq!(id, 0);
         id = g.add_node(Some("Second"), Some(0), None);
@@ -180,17 +200,19 @@ mod tests {
         assert_eq!(g.edges_count(), 1);
     }
 
-    #[test]
-    fn remove_node_ok() {
-        let mut g = Graph::<&str>::new(true);
-        let mut id = g.add_node(Some("First"), None, None);
-        assert_eq!(id, 0);
-        id = g.add_node(Some("Second"), Some(0), None);
-        assert_eq!(id, 1);
-        id = g.add_node(Some("Third"), Some(0), None);
-        assert_eq!(id, 2);
-        assert_eq!(g.nodes_count(), 3);
-        g.remove_node(1);
-        assert_eq!(g.nodes_count(), 2);
-    }
+    // #[test]
+    // fn remove_node_ok() {
+    //     let mut g = Graph::<&str, usize>::new(true);
+    //     let mut id = g.add_node(Some("First"), None, None);
+    //     assert_eq!(id, 0);
+    //     id = g.add_node(Some("Second"), Some(0), None);
+    //     assert_eq!(id, 1);
+    //     id = g.add_node(Some("Third"), Some(0), None);
+    //     assert_eq!(id, 2);
+    //     assert_eq!(g.nodes_count(), 3);
+    //     assert_eq!(g.edges_count(), 2);
+    //     g.remove_node(1);
+    //     assert_eq!(g.nodes_count(), 2);
+    //     //assert_eq!(g.edges_count(), 1);
+    // }
 }

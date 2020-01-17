@@ -1,9 +1,8 @@
-use toolbox::ds::matrix::Matrix;
 use std::fmt::Debug;
+use toolbox::ds::matrix::Matrix;
 
 #[test]
 fn matrix_integration_test() {
-    
     let mut m = Matrix::<i32>::new(3, 5);
     m.fill(5);
     print_matrix::<i32>(&m);
