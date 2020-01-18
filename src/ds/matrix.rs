@@ -257,6 +257,26 @@ where
     }
 }
 
+impl<'a, T> ops::Deref for Matrix<'a, T>
+where
+    T: Default + Clone
+{
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        &self.buffer.as_ref()
+    }
+}
+
+impl<'a, T> ops::DerefMut for Matrix<'a, T>
+where
+    T: Default + Clone
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.buffer
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -383,6 +403,28 @@ mod tests {
         a.fill(7);
         let b = a * 10;
         assert_eq_all(&b, 70);
+    }
+
+    #[test]
+    fn deref_ok() {
+        let mut m = Matrix::<i32>::new(2, 3);
+        m[0][0] = 7;
+        m[0][1] = 12;
+        m[0][2] = 17;
+        m[1][0] = 25;
+        m[1][1] = 31;
+        m[1][2] = 100;
+        assert_eq!(m.binary_search(&31), Ok(4));
+    }
+
+    #[test]
+    fn deref_mut_ok() {
+        let mut m = Matrix::<i32>::new(2, 3);
+        m.fill(7);
+        if let Some(first) = m.first_mut() {
+            *first = 70;
+        }
+        assert_eq!(m[0][0], 70);
     }
 
     fn assert_eq_all<T: Default + Clone + PartialEq + Debug>(m: &Matrix<T>, value: T) {
