@@ -117,6 +117,10 @@ where
         }
         row * self.cols + col
     }
+
+    fn is_same_size(&self, other: &Self) -> bool {
+        self.cols == other.cols && self.buffer.len() == other.buffer.len()
+    }
 }
 
 impl<'a, T> Drop for Matrix<'a, T>
@@ -218,7 +222,12 @@ where
 {
     type Output = Self;
 
+    /// Performs addition of two matrices.
+    /// Panics, if the sizes of the operands do not match.
     fn add(self, other: Self) -> Self {
+        if !self.is_same_size(&other) {
+            panic!("operands vary in size");
+        }
         let result = Self::new(self.rows(), self.cols());
         for idx in 0..self.elements_number() {
             result.buffer[idx] = self.buffer[idx].clone() + other.buffer[idx].clone();
@@ -233,7 +242,12 @@ where
 {
     type Output = Self;
 
+    /// Performs subtraction of two matrices.
+    /// Panics, if the sizes of the operands do not match.
     fn sub(self, other: Self) -> Self {
+        if !self.is_same_size(&other) {
+            panic!("operands vary in size");
+        }
         let result = Self::new(self.rows(), self.cols());
         for idx in 0..self.elements_number() {
             result.buffer[idx] = self.buffer[idx].clone() - other.buffer[idx].clone();
@@ -248,6 +262,7 @@ where
 {
     type Output = Self;
 
+    /// Performs multiplication the matrix by a number.
     fn mul(self, value: T) -> Self {
         let result = Self::new(self.rows(), self.cols());
         for idx in 0..self.elements_number() {
@@ -259,7 +274,7 @@ where
 
 impl<'a, T> ops::Deref for Matrix<'a, T>
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     type Target = [T];
 
@@ -270,7 +285,7 @@ where
 
 impl<'a, T> ops::DerefMut for Matrix<'a, T>
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.buffer
