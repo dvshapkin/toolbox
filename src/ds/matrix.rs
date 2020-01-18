@@ -279,7 +279,7 @@ where
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        &self.buffer.as_ref()
+        self.buffer
     }
 }
 
@@ -288,7 +288,7 @@ where
     T: Default + Clone,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.buffer
+        self.buffer
     }
 }
 
