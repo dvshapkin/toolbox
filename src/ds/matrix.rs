@@ -225,7 +225,11 @@ where
     /// Performs addition of two matrices.
     /// Panics, if the sizes of the operands do not match.
     fn add(self, other: Self) -> Self {
+<<<<<<< HEAD
         if !self.is_same_size(&other) {
+=======
+        if ! self.is_same_size(&other) {
+>>>>>>> cc6400db47872348a16794f16f3492a0fab796c2
             panic!("operands vary in size");
         }
         let result = Self::new(self.rows(), self.cols());
@@ -245,7 +249,11 @@ where
     /// Performs subtraction of two matrices.
     /// Panics, if the sizes of the operands do not match.
     fn sub(self, other: Self) -> Self {
+<<<<<<< HEAD
         if !self.is_same_size(&other) {
+=======
+        if ! self.is_same_size(&other) {
+>>>>>>> cc6400db47872348a16794f16f3492a0fab796c2
             panic!("operands vary in size");
         }
         let result = Self::new(self.rows(), self.cols());
