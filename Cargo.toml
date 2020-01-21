@@ -1,6 +1,6 @@
 [package]
 name = "toolbox"
-version = "0.2.6"
+version = "0.2.7-final"
 authors = ["dvshapkin <dvshapkin@mail.ru>"]
 edition = "2018"
 
@@ -17,3 +17,5 @@ keywords = ["tools", "vfs", "algorithm", "data-structure", "matrix"]
 license = "Apache-2.0"
 
 [dependencies]
+alg_ds = "0.2"
+vfsys = "0.1"

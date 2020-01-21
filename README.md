@@ -1,8 +1,13 @@
 # toolbox::{alg, ds, vfs}
 
-[![Crates.io](https://img.shields.io/crates/l/toolbox.svg)](https://github.com/torkve/shotwellvfs/blob/master/LICENSE)
+[![Crates.io](https://img.shields.io/crates/l/toolbox.svg)](https://github.com/dvshapkin/toolbox/LICENSE)
 
 <small>Tested on linux, windows.</small>
+
+Further support for this library is not planned. 
+At the moment, it is a "wrapper" of its two dependencies: 
+- [alg_ds](https://crates.io/crates/alg_ds)
+- [vfsys](https://crates.io/crates/vfsys)
 
 ### alg
 *Search algorithms:*
