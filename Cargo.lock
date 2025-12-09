@@ -10,7 +10,7 @@ checksum = "21610cff7c5630553119e5d480a49e4713c70ce46b1c2931f419f470776b065a"
 
 [[package]]
 name = "toolbox"
-version = "0.2.8-final"
+version = "0.2.9"
 dependencies = [
  "alg_ds",
  "vfsys",
