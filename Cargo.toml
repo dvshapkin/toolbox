@@ -1,6 +1,6 @@
 [package]
 name = "toolbox"
-version = "0.2.7-final"
+version = "0.2.8-final"
 authors = ["dvshapkin <dvshapkin@mail.ru>"]
 edition = "2018"
 
@@ -17,5 +17,5 @@ keywords = ["tools", "vfs", "algorithm", "data-structure", "matrix"]
 license = "MIT"
 
 [dependencies]
-alg_ds = "0.2"
+alg_ds = "0.3"
 vfsys = "0.1"
